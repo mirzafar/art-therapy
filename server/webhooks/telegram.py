@@ -57,8 +57,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                 ON CONFLICT DO NOTHING
                 RETURNING id, username
                 ''',
-                sender['first_name'],
-                sender['username'],
+                sender.get('first_name'),
+                sender.get('username'),
                 chat_id
             )
 
