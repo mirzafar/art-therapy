@@ -123,30 +123,24 @@ class TelegramWebhookHandler(HTTPMethodView):
                 position
             ) or {}
 
-            if not question:
-                await tgclient.api_call(
-                    payload={
-                        'chat_id': chat_id,
-                        'text': '''
-                        Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!
-                        '''
-                    }
-                )
+            payload = {'chat_id': chat_id}
+
+            if question:
+                data[position] = {
+                    'question': question['text'],
+                    'answer': None
+                }
+
+                payload['text'] = question['text']
+
+                await cache.set(f'art:question:position:{customer["id"]}', position + 1)
+                await cache.set(f'art:question:data:{customer["id"]}', ujson.dumps(data))
+
+            else:
+                payload['text'] = 'Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!'
 
                 await cache.delete(f'art:question:position:{customer["id"]}')
                 await cache.delete(f'art:question:data:{customer["id"]}')
-
-                return response.json({})
-
-            data[position] = {
-                'question': question['text'],
-                'answer': None
-            }
-
-            payload = {
-                'chat_id': chat_id,
-                'text': question['text']
-            }
 
             if question['buttons']:
                 payload.update({
@@ -175,9 +169,6 @@ class TelegramWebhookHandler(HTTPMethodView):
                 })
 
             await tgclient.api_call(payload=payload)
-
-            await cache.set(f'art:question:position:{customer["id"]}', position + 1)
-            await cache.set(f'art:question:data:{customer["id"]}', ujson.dumps(data))
 
         if success is False:
             await tgclient.api_call(
