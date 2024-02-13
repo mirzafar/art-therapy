@@ -155,6 +155,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                             }] for button in question['buttons']
                         ],
                         'one_time_keyboard': True,
+                        'remove_keyboard': True,
                         'resize_keyboard': True
                     }
                 })
