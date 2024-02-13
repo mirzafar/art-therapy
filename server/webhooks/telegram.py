@@ -154,7 +154,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 # 'callback_data': button['callback_data']
                             }] for button in question['buttons']
                         ],
-                        'one_time_keyboard': True
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
                     }
                 })
 
