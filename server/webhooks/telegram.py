@@ -125,6 +125,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                         '''
                     }
                 )
+                print('---> end')
+                print(data)
 
                 await cache.delete(f'art:question:position:{customer["id"]}')
                 await cache.delete(f'art:question:data:{customer["id"]}')
