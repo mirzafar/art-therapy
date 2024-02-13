@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import ujson
 from sanic import response
 from sanic.views import HTTPMethodView
@@ -103,7 +105,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     text
                 )
             else:
-                if (position - 1) in data:
+                if str((position - 1)) in data:
                     data[position - 1]['answer'] = text
 
             question = await db.fetchrow(
@@ -126,7 +128,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     }
                 )
                 print('---> end')
-                print(data)
+                pprint(data)
 
                 await cache.delete(f'art:question:position:{customer["id"]}')
                 await cache.delete(f'art:question:data:{customer["id"]}')
