@@ -139,6 +139,9 @@ class TelegramWebhookHandler(HTTPMethodView):
                     position
                 ) or {}
 
+                await cache.set(f'art:question:position:{customer["id"]}', position + 1)
+                await cache.set(f'art:question:data:{customer["id"]}', ujson.dumps(data))
+
             payload = {'chat_id': chat_id}
 
             if question:
@@ -148,9 +151,6 @@ class TelegramWebhookHandler(HTTPMethodView):
                 }
 
                 payload['text'] = question['text']
-
-                await cache.set(f'art:question:position:{customer["id"]}', position + 1)
-                await cache.set(f'art:question:data:{customer["id"]}', ujson.dumps(data))
 
             else:
                 payload['text'] = 'Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!'
