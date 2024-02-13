@@ -169,7 +169,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                     }
                 })
 
-            await tgclient.api_call(payload=payload)
+            return response.json(payload)
+            # await tgclient.api_call(payload=payload)
 
         if success is False:
             await tgclient.api_call(
