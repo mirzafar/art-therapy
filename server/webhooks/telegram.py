@@ -81,7 +81,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                     SET name = $2
                     WHERE id = $1
                     ''',
-                    customer['id']
+                    customer['id'],
+                    text
                 )
             else:
                 if (position - 1) in data:
