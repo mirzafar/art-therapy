@@ -106,7 +106,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                 )
             else:
                 if str((position - 1)) in data:
-                    data[position - 1]['answer'] = text
+                    data[str(position - 1)]['answer'] = text
 
             question = await db.fetchrow(
                 '''
