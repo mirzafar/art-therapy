@@ -151,6 +151,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
                 if question.get('media'):
                     payload['audio'] = question['media']['url']
+                    payload['caption'] = question['text']
                     method = 'sendAudio'
                 else:
                     payload['text'] = question['text']
