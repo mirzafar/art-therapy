@@ -115,14 +115,29 @@ class TelegramWebhookHandler(HTTPMethodView):
                 if str(position - 1) in data:
                     data[str(position - 1)]['answer'] = text
 
-            question = await db.fetchrow(
+            prev_question = await db.fetchrow(
                 '''
                 SELECT *
                 FROM public.questions
                 WHERE position = $1
                 ''',
-                position
-            ) or {}
+                position - 1
+            )
+
+            question = None
+            if prev_question and prev_question['buttons']:
+                if text not in [text for x in prev_question['buttons']]:
+                    question = prev_question
+
+            if not question:
+                question = await db.fetchrow(
+                    '''
+                    SELECT *
+                    FROM public.questions
+                    WHERE position = $1
+                    ''',
+                    position
+                ) or {}
 
             payload = {'chat_id': chat_id}
 
