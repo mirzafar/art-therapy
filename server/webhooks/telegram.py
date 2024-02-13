@@ -148,11 +148,11 @@ class TelegramWebhookHandler(HTTPMethodView):
             if question['buttons']:
                 payload.update({
                     'reply_markup': {
-                        'inline_keyboard': [
+                        'keyboard': [
                             [{
                                 'text': button['text'],
-                                'callback_data': button['callback_data']
-                            } for button in question['buttons']]
+                                # 'callback_data': button['callback_data']
+                            }] for button in question['buttons']
                         ],
                         'remove_keyboard': True
                     }
