@@ -91,6 +91,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                 data = ujson.loads(data)
 
             if await cache.get(f'art:question:name:{customer["id"]}'):
+                await cache.delete(f'art:question:name:{customer["id"]}')
+
                 await db.execute(
                     '''
                     UPDATE public.customers
@@ -114,6 +116,19 @@ class TelegramWebhookHandler(HTTPMethodView):
             ) or {}
 
             if not question:
+                await tgclient.api_call(
+                    payload={
+                        'chat_id': chat_id,
+                        'text': '''
+                        Приятно было с вами общаться!
+                        Спасибо за то, что воспользовались ботом!
+                        '''
+                    }
+                )
+
+                await cache.delete(f'art:question:position:{customer["id"]}')
+                await cache.delete(f'art:question:data:{customer["id"]}')
+
                 return response.json({})
 
             data[position] = {
