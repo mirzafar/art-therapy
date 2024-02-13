@@ -11,6 +11,7 @@ from core.cache import cache
 from core.db import mongo, db
 from core.session import session
 from settings import settings
+from webhooks import webhooks_bp
 
 app = Sanic(name='demo')
 
@@ -43,7 +44,7 @@ async def initialize_modules(_app, _loop):
 
 app.blueprint([
     api_group,
-    openapi2_blueprint
+    webhooks_bp,
 ])
 
 app.add_route(UploadView.as_view(), '/api/upload/')
