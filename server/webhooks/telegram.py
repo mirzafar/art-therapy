@@ -126,7 +126,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
             question = None
             if prev_question and prev_question['buttons']:
-                if text not in [text for x in prev_question['buttons']]:
+                if text not in [x['text'] for x in prev_question['buttons']]:
                     question = prev_question
 
             if not question:
