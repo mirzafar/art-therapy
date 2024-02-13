@@ -142,7 +142,8 @@ class TelegramWebhookHandler(HTTPMethodView):
 
             payload = {
                 'chat_id': chat_id,
-                'text': question['text']
+                'text': question['text'],
+                'reply_markup': []
             }
 
             if question['buttons']:
