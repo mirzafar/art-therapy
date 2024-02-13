@@ -87,10 +87,16 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         if text:
             success = True
+
             position = IntUtils.to_int(await cache.get(f'art:question:position:{customer["id"]}')) or 1
             data = await cache.get(f'art:question:data:{customer["id"]}') or {}
             if data:
                 data = ujson.loads(data)
+
+            if text.startswith('🔄'):
+                await cache.delete(f'art:question:position:{customer["id"]}')
+                await cache.delete(f'art:question:data:{customer["id"]}')
+                position, data = 1, {}
 
             if await cache.get(f'art:question:name:{customer["id"]}'):
                 await cache.delete(f'art:question:name:{customer["id"]}')
@@ -127,8 +133,6 @@ class TelegramWebhookHandler(HTTPMethodView):
                         '''
                     }
                 )
-                print('---> end')
-                pprint(data)
 
                 await cache.delete(f'art:question:position:{customer["id"]}')
                 await cache.delete(f'art:question:data:{customer["id"]}')
@@ -155,7 +159,18 @@ class TelegramWebhookHandler(HTTPMethodView):
                             }] for button in question['buttons']
                         ],
                         'one_time_keyboard': True,
-                        'remove_keyboard': True,
+                        'resize_keyboard': True
+                    }
+                })
+            else:
+                payload.update({
+                    'reply_markup': {
+                        'keyboard': [
+                            [{
+                                'text': '🔄 Пройти заново',
+                            }]
+                        ],
+                        'one_time_keyboard': True,
                         'resize_keyboard': True
                     }
                 })
