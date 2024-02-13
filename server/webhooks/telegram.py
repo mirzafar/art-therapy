@@ -88,12 +88,11 @@ class TelegramWebhookHandler(HTTPMethodView):
         data = await cache.get(f'art:question:data:{customer["id"]}') or {}
 
         if text and text.startswith('🔄'):
-            await cache.set(f'art:question:position:{customer["id"]}', '1')
-            await cache.set(f'art:question:data:{customer["id"]}', ujson.dumps({}))
             position, data = 1, {}
 
         if await cache.get(f'art:question:name:{customer["id"]}'):
             await cache.delete(f'art:question:name:{customer["id"]}')
+            position, data = 1, {}
 
             await db.execute(
                 '''
