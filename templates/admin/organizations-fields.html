@@ -1,0 +1,136 @@
+{% extends 'admin/base.html' %}
+{% block container %}
+<div class="nk-content-wrap">
+    <div class="components-preview wide-md mx-auto">
+        <div class="nk-block nk-block-lg">
+            <div class="preview-btn-item">
+
+                <a id="btn-new-row" class="btn btn-secondary">Добавить</a>
+            </div>
+            <div class="card card-preview">
+                <div class="card-inner">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th scope="col"><span class="overline-title">Наименование</span></th>
+                                <th scope="col"><span class="overline-title">&nbsp;</span></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr id="new-row" style="display: none" data-id="new" class="js-cont">
+                                <td><input type="text" class="form-control" name="title"></td>
+                                <td>
+                                    <a class="btn btn-dim btn-success btn-sm insert_item">
+                                        <em class="icon ni ni-check"></em>
+                                    </a>
+                                    <a id="js-cancel" class="btn btn-dim btn-dark btn-sm">
+                                        <em class="icon ni ni-cross"></em>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% for x in fields %}
+                            <tr data-id="{{ x.id }}" class="js-cont">
+                                <td>
+                                    <input type="text" class="form-control" name="title"
+                                           value="{{ x.title }}"></td>
+                                <td>
+                                    <a class="btn btn-dim btn-success btn-sm update_item">
+                                        <em class="icon ni ni-check"></em>
+                                    </a>
+                                    <a class="btn btn-dim btn-danger btn-sm delete_item">
+                                        <em class="icon ni ni-trash"></em>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    $('#btn-new-row, #js-cancel').on('click', function () {
+        $('#new-row').toggle()
+    })
+
+
+    $('.insert_item').on('click', async function () {
+        let new_id = $(this).parents('tr').data('id');
+        let new_data = getValues('.js-cont[data-id="' + new_id + '"]')
+        new_data.field_id = 'create'
+
+        try {
+            let response = await fetch('/api/organizations/fields/', {
+                method: "POST",
+                body: JSON.stringify(new_data)
+            });
+
+            response = await response.json();
+            if (response._success === true) {
+                alertShow('success', '', true)
+            } else {
+                alertShow('error', response.message)
+            }
+
+        } catch (error) {
+            alertShow('waring', `${error.message}`)
+        }
+    })
+
+    $('.update_item').on('click', async function () {
+        let new_id = $(this).parents('tr').data('id');
+        let data = getValues('.js-cont[data-id="' + new_id + '"]')
+        data.field_id = new_id
+
+        try {
+            let response = await fetch('/api/organizations/fields/', {
+                method: "POST",
+                body: JSON.stringify(data)
+            });
+
+            response = await response.json();
+            if (response._success === true) {
+                alertShow('success', '', true)
+            } else {
+                alertShow('error', response.message)
+            }
+
+        } catch (error) {
+            alertShow('waring', `${error.message}`)
+        }
+    })
+
+    $('.delete_item').on('click', async function () {
+        let new_id = $(this).parents('tr').data('id');
+        try {
+            let response = await fetch('/api/organizations/fields/', {
+                method: "DELETE",
+                body: JSON.stringify({
+                    'field_id': new_id
+                })
+            });
+
+            response = await response.json();
+            if (response._success === true) {
+                alertShow('success', '', true)
+            } else {
+                alertShow('error', response.message)
+            }
+
+        } catch (error) {
+            alertShow('waring', `${error.message}`)
+        }
+    })
+
+    $('li[data-li="organization"]').addClass('active')
+    $('li[data-li="organization-field"]').addClass('active')
+
+</script>
+{% endblock %}

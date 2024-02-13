@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zxx" class="js">
+<meta http-equiv="content-type" content="text/html;charset=UTF-8"/>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Main</title>
+    <link rel="stylesheet" href="/static/css/dashlite55a0.css?ver=3.2.0">
+    <link id="skin-default" rel="stylesheet" href="/static/css/theme55a0.css?ver=3.2.0">
+</head>
+<body class="nk-body ui-rounder has-sidebar ui-light ">
+<div class="nk-app-root">
+    <div class="nk-main ">
+        <div class="nk-sidebar is-light nk-sidebar-fixed " data-content="sidebarMenu">
+            <div class="nk-sidebar-element nk-sidebar-head">
+                <div class="nk-sidebar-brand">
+                    <a href="/api/" class="logo-link nk-sidebar-logo">
+                        <h3 class="ff-base fw-medium"> manage <small class="text-soft">ment</small></h3>
+                    </a></div>
+                <div class="nk-menu-trigger me-n2">
+                    <a href="#" class="nk-nav-toggle nk-quick-nav-icon d-xl-none"
+                       data-target="sidebarMenu"><em class="icon ni ni-arrow-left"></em>
+                    </a>
+                </div>
+            </div>
+            <div class="nk-sidebar-element">
+                <div class="nk-sidebar-content">
+                    <div class="nk-sidebar-menu" data-simplebar>
+                        <ul class="nk-menu">
+                            <li data-li="home" class="nk-menu-item">
+                                <a href="/" class="nk-menu-link"><span
+                                        class="nk-menu-icon"><em class="icon ni ni-view-col"></em></span><span
+                                        class="nk-menu-text">Главная</span>
+                                </a>
+                            </li>
+
+                            <li data-li="organization" class="nk-menu-item has-sub">
+                                <a class="nk-menu-link nk-menu-toggle">
+                                    <span class="nk-menu-icon">
+                                        <em class="icon ni ni-tile-thumb"></em>
+                                    </span>
+                                    <span class="nk-menu-text">Компании</span>
+                                </a>
+                                <ul class="nk-menu-sub">
+                                    <li data-li="organization-list" class="nk-menu-item">
+                                        <a href="/api/organizations/" class="nk-menu-link">
+                                            <span class="nk-menu-text">Список</span>
+                                        </a>
+                                    </li>
+                                    <li data-li="organization-field" class="nk-menu-item">
+                                        <a href="/api/organizations/fields/" class="nk-menu-link">
+                                            <span class="nk-menu-text">Поля</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li data-li="users" class="nk-menu-item">
+                                <a href="/api/users/" class="nk-menu-link">
+                                    <span class="nk-menu-icon">
+                                        <em class="icon ni ni-users"></em>
+                                    </span>
+                                    <span class="nk-menu-text">Сотрудники</span>
+                                </a>
+                            </li>
+                            <li data-li="sales" class="nk-menu-item has-sub">
+                                <a class="nk-menu-link nk-menu-toggle">
+                                    <span class="nk-menu-icon">
+                                        <em class="icon ni ni-amazon"></em>
+                                    </span>
+                                    <span class="nk-menu-text">Продажа</span>
+                                </a>
+                                <ul class="nk-menu-sub">
+                                    <li data-li="sales-overheads" class="nk-menu-item">
+                                        <a href="/api/sales/overheads/" class="nk-menu-link">
+                                            <span class="nk-menu-text">Накладные</span>
+                                        </a>
+                                    </li>
+                                    <li data-li="sales-products" class="nk-menu-item">
+                                        <a href="/api/sales/products/" class="nk-menu-link">
+                                            <span class="nk-menu-text">Продукты</span>
+                                        </a>
+                                    </li>
+                                    <li data-li="sales-goods" class="nk-menu-item">
+                                        <a href="/api/sales/goods/" class="nk-menu-link">
+                                            <span class="nk-menu-text">Товары</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="nk-wrap ">
+            <div class="nk-header is-light nk-header-fixed is-light">
+                <div class="container-xl wide-xl">
+                    <div class="nk-header-wrap">
+                        <div class="nk-menu-trigger d-xl-none ms-n1 me-3">
+                            <a href="#"
+                               class="nk-nav-toggle nk-quick-nav-icon"
+                               data-target="sidebarMenu">
+                                <em class="icon ni ni-menu"></em>
+                            </a>
+                        </div>
+
+                        <div class="nk-header-tools">
+                            <ul class="nk-quick-nav">
+                                <li class="dropdown notification-dropdown"><a href="#"
+                                                                              class="dropdown-toggle nk-quick-nav-icon"
+                                                                              data-bs-toggle="dropdown">
+                                    <div class="icon-status icon-status-info"><em class="icon ni ni-bell"></em></div>
+                                </a>
+                                    <div class="dropdown-menu dropdown-menu-xl dropdown-menu-end">
+                                        <div class="dropdown-head"><span class="sub-title nk-dropdown-title">Notifications</span><a
+                                                href="#">Mark All as Read</a></div>
+                                        <div class="dropdown-body">
+                                            <div class="nk-notification">
+
+                                            </div>
+                                        </div>
+                                        <div class="dropdown-foot center"><a href="#">View All</a></div>
+                                    </div>
+                                </li>
+
+                                <li class="dropdown user-dropdown"><a href="#" class="dropdown-toggle"
+                                                                      data-bs-toggle="dropdown">
+                                    <div class="user-toggle">
+                                        <div class="user-avatar sm"><em class="icon ni ni-user-alt"></em></div>
+                                    </div>
+                                </a>
+                                    <div class="dropdown-menu dropdown-menu-md dropdown-menu-end">
+                                        <div class="dropdown-inner user-card-wrap bg-lighter">
+                                            <div class="user-card">
+                                                <div class="user-avatar">
+                                                    <span>
+                                                        {% if _user %}
+                                                            {{_user.last_name[:1]|upper}}{{_user.first_name[:1]|upper}}
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+                                                <div class="user-info">
+                                                    <span class="lead-text">
+                                                        {% if _user %}
+                                                            {{_user.last_name|capitalize}} {{_user.first_name|capitalize}}
+                                                        {% endif %}
+                                                    </span>
+                                                    <span class="sub-text">
+                                                        {% if _user %}
+                                                            {{_user.email}}
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="dropdown-inner">
+                                            <ul class="link-list">
+                                                <li><a href="/api/profile/"><em
+                                                        class="icon ni ni-user-alt"></em><span>View Profile</span></a>
+                                                </li>
+                                                <li><a href="#"><em
+                                                        class="icon ni ni-setting-alt"></em><span>Account Setting</span></a>
+                                                </li>
+                                                <li><a href="#"><em class="icon ni ni-activity-alt"></em><span>Login Activity</span></a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div class="dropdown-inner">
+                                            <ul class="link-list">
+                                                <li>
+                                                    <a href="/admin/logout/">
+                                                        <em class="icon ni ni-signout"></em>
+                                                        <span>Sign out</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nk-content nk-content-fluid">
+                <div class="container-xl wide-xl">
+                    <div class="nk-content-body">
+                        <div id="alert-block" style="display: none" class="nk-header nk-header-fixed is-light">
+                            <div style="z-index: 100000" class="container-xl wide-xl">
+                                <div style="display: none"
+                                     id="alert-success"
+                                     class="alert alert-success alert-icon"
+                                     role="alert">
+                                    <em class="icon ni ni-check-circle"></em> <strong>Success! </strong>.
+                                    <span></span>
+                                </div>
+                                <div style="display: none" id="alert-info"
+                                     class="alert alert-fill alert-info alert-icon">
+                                    <em class="icon ni ni-alert-circle"></em> <strong>Info! </strong>.
+                                    <span></span>
+                                </div>
+                                <div style="display: none" id="alert-warning"
+                                     class="alert alert-fill alert-warning alert-icon"><em
+                                        class="icon ni ni-alert-circle"></em>
+                                    <strong>Warning! </strong><span>Something went wrong. Please check.</span>
+                                </div>
+                                <div style="display: none" id="alert-error"
+                                     class="alert alert-fill alert-danger alert-icon"><em
+                                        class="icon ni ni-cross-circle"></em>
+                                    <strong>Error! </strong><span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% block container %}
+                        {% endblock %}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/static/js/bundle55a0.js?ver=3.2.0"></script>
+<script src="/static/js/scripts55a0.js?ver=3.2.0"></script>
+<script src="/static/js/charts/gd-campaign55a0.js?ver=3.2.0"></script>
+<script src="/static/js/jquery-3.7.1.min.js"></script>
+<script src="/static/js/manage.js"></script>
+<script src="/static/js/uploder.js"></script>
+<script src="/static/js/alerts.js"></script>
+{% block js %}
+{% endblock %}
+</body>
+</html>
