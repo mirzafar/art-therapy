@@ -66,10 +66,9 @@ class TelegramWebhookHandler(HTTPMethodView):
             await tgclient.api_call(
                 payload={
                     'chat_id': chat_id,
-                    'text': '''
-                    Привет! Меня зовут [имя бота]. Я здесь, чтобы помочь тебе с помощью арт-терапии через музыку.
-                    Как тебя зовут?
-                    '''
+                    'text': 'Привет! Меня зовут [имя бота]. '
+                            'Я здесь, чтобы помочь тебе с помощью арт-терапии через музыку.\n'
+                            'Как тебя зовут?'
                 }
             )
 
@@ -93,27 +92,27 @@ class TelegramWebhookHandler(HTTPMethodView):
             await cache.set(f'art:question:data:{customer["id"]}', ujson.dumps({}))
             position, data = 1, {}
 
+        if await cache.get(f'art:question:name:{customer["id"]}'):
+            await cache.delete(f'art:question:name:{customer["id"]}')
+
+            await db.execute(
+                '''
+                UPDATE public.customers
+                SET name = $2
+                WHERE id = $1
+                ''',
+                customer['id'],
+                text
+            )
+
         if text and position:
             success = True
 
             if data:
                 data = ujson.loads(data)
 
-            if await cache.get(f'art:question:name:{customer["id"]}'):
-                await cache.delete(f'art:question:name:{customer["id"]}')
-
-                await db.execute(
-                    '''
-                    UPDATE public.customers
-                    SET name = $2
-                    WHERE id = $1
-                    ''',
-                    customer['id'],
-                    text
-                )
-            else:
-                if str(position - 1) in data:
-                    data[str(position - 1)]['answer'] = text
+            if str(position - 1) in data:
+                data[str(position - 1)]['answer'] = text
 
             prev_question = await db.fetchrow(
                 '''
