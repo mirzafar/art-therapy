@@ -20,10 +20,22 @@ class TelegramWebhookHandler(HTTPMethodView):
         print(f'telegram_message: {data}')
 
         message = DictUtils.as_dict(data.get('message'))
+        callback_query = DictUtils.as_dict(data.get('callback_query'))
 
         if message:
             chat_id = StrUtils.to_str(message.get('chat', {}).get('id'))
             sender = message.get('from', {})
+            customer = await db.fetchrow(
+                '''
+                SELECT id, username
+                FROM public.customers
+                WHERE uid = $1
+                ''',
+                chat_id
+            )
+        elif callback_query:
+            chat_id = StrUtils.to_str(callback_query.get('message', {}).get('chat', {}).get('id'))
+            sender = callback_query.get('from', {})
             customer = await db.fetchrow(
                 '''
                 SELECT id, username
@@ -68,7 +80,11 @@ class TelegramWebhookHandler(HTTPMethodView):
         if message and message.get('text'):
             text = message['text']
 
+        if callback_query and callback_query.get('data'):
+            text = callback_query['data']
+
         if text:
+            success = True
             position = IntUtils.to_int(await cache.get(f'art:question:position:{customer["id"]}')) or 1
             data = await cache.get(f'art:question:data:{customer["id"]}') or {}
             if data:
