@@ -153,7 +153,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 'text': button['text'],
                                 'callback_data': button['callback_data']
                             } for button in question['buttons']]
-                        ]
+                        ],
+                        'remove_keyboard': True
                     }
                 })
 
