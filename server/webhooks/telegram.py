@@ -106,6 +106,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         if text and position:
             success = True
+            method = 'sendMessage'
 
             if data:
                 data = ujson.loads(data)
@@ -148,7 +149,11 @@ class TelegramWebhookHandler(HTTPMethodView):
                     'answer': None
                 }
 
-                payload['text'] = question['text']
+                if question.get('media'):
+                    payload['audio'] = question['media']['url']
+                    method = 'sendAudio'
+                else:
+                    payload['text'] = question['text']
 
             else:
                 payload['text'] = 'Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!'
@@ -182,7 +187,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     }
                 })
 
-            await tgclient.api_call(payload=payload)
+            await tgclient.api_call(method_name=method, payload=payload)
 
         if success is False:
             await tgclient.api_call(
