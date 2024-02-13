@@ -101,7 +101,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                 return response.json({})
 
             data[position] = {
-                'question': question['title'],
+                'question': question['text'],
                 'answer': None
             }
 
