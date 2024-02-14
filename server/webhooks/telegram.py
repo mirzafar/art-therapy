@@ -158,6 +158,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                     payload['caption'] = question['text']
                     method = 'sendAudio'
                 elif question.get('details') and question['details'].get('action') == 'get_tunes':
+                    print()
+                    print()
                     tunes = await db.fetch(
                         '''
                         SELECT *
@@ -166,15 +168,16 @@ class TelegramWebhookHandler(HTTPMethodView):
                         ''',
                         genre
                     )
+                    print(tunes, len(tunes))
                     if tunes:
                         for tune in tunes:
-                            await tgclient.api_call(
+                            print(await tgclient.api_call(
                                 method_name='sendAudio',
                                 payload={
                                     'chat_id': chat_id,
                                     'audio': settings['file_path'] + '/static/uploads/' + tune['path'],
                                 }
-                            )
+                            ))
                     payload['text'] = question['text']
                 else:
                     payload['text'] = question['text']
