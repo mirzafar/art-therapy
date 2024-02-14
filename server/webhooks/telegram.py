@@ -172,12 +172,12 @@ class TelegramWebhookHandler(HTTPMethodView):
                     if tunes:
                         for tune in tunes:
                             print()
-                            print('url', settings['file_path'] + '/static/uploads/' + tune['path'])
+                            print('url', settings['base_url'] + '/static/uploads/' + tune['path'])
                             print(await tgclient.api_call(
                                 method_name='sendAudio',
                                 payload={
                                     'chat_id': chat_id,
-                                    'audio': settings['file_path'] + '/static/uploads/' + tune['path'],
+                                    'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
                                 }
                             ))
                     payload['text'] = question['text']
