@@ -177,6 +177,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 method_name='sendAudio',
                                 payload={
                                     'chat_id': chat_id,
+                                    'title': tune['title'],
                                     'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
                                 }
                             ))
