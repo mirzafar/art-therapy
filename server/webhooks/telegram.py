@@ -7,6 +7,7 @@ from sanic.views import HTTPMethodView
 from clients.telegram import tgclient
 from core.cache import cache
 from core.db import db
+from settings import settings
 from utils.dicts import DictUtils
 from utils.ints import IntUtils
 from utils.strs import StrUtils
@@ -123,10 +124,13 @@ class TelegramWebhookHandler(HTTPMethodView):
                 position - 1
             )
 
-            question = None
+            question, genre = None, None
             if prev_question and prev_question['buttons']:
-                if text not in [x['text'] for x in prev_question['buttons']]:
-                    question = prev_question
+                question = prev_question
+                for x in prev_question['buttons']:
+                    if text == x['text']:
+                        question = None
+                        genre = x['callback_data']
 
             if not question:
                 question = await db.fetchrow(
@@ -153,6 +157,25 @@ class TelegramWebhookHandler(HTTPMethodView):
                     payload['audio'] = question['media']['url']
                     payload['caption'] = question['text']
                     method = 'sendAudio'
+                elif question.get('details') and question['details'].get('action') == 'get_tunes':
+                    tunes = await db.fetch(
+                        '''
+                        SELECT *
+                        FROM public.tunes
+                        WHERE genre = $1
+                        ''',
+                        genre
+                    )
+                    if tunes:
+                        for tune in tunes:
+                            await tgclient.api_call(
+                                method_name='sendAudio',
+                                payload={
+                                    'chat_id': chat_id,
+                                    'audio': settings['file_path'] + '/static/uploads/' + tune['path'],
+                                }
+                            )
+                    payload['text'] = question['text']
                 else:
                     payload['text'] = question['text']
 
