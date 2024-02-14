@@ -171,6 +171,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                     print(tunes, len(tunes))
                     if tunes:
                         for tune in tunes:
+                            print()
+                            print('url', settings['file_path'] + '/static/uploads/' + tune['path'])
                             print(await tgclient.api_call(
                                 method_name='sendAudio',
                                 payload={
