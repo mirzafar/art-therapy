@@ -66,7 +66,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             await tgclient.api_call(
                 payload={
                     'chat_id': chat_id,
-                    'text': 'Привет! Меня зовут [имя бота]. '
+                    'text': 'Привет! Меня зовут TulparIfy. '
                             'Я здесь, чтобы помочь тебе с помощью арт-терапии через музыку.\n'
                             'Как тебя зовут?'
                 }
