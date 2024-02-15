@@ -177,7 +177,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 genre = x['callback_data']
 
                     lemmas = m.lemmatize(text)
-                    risk_words = RISK_WORDS + prev_question.get('details', {}).get('risk_words', [])
+                    risk_words = RISK_WORDS + (prev_question.get('details') or {}).get('risk_words', [])
 
                     for x in risk_words:
                         if len(list(set(x) & set(lemmas))) == len(x):
