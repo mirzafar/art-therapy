@@ -151,11 +151,11 @@ class TelegramWebhookHandler(HTTPMethodView):
         if text:
             success, method = True, 'sendMessage'
             while success:
-                if not questions:
+                prev_question = await cache.get(f'art:telegram:prev_question:{customer["id"]}')
+
+                if not questions or not prev_question:
                     success = False
                     continue
-
-                prev_question = await cache.get(f'art:telegram:prev_question:{customer["id"]}')
 
                 question, genre = None, None
                 if prev_question:
