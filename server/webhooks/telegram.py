@@ -153,6 +153,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             while success:
                 prev_question = await cache.get(f'art:telegram:prev_question:{customer["id"]}')
 
+                print('---> 1', len(questions))
                 if not questions:
                     success = False
                     continue
@@ -160,6 +161,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     success = False
                     continue
 
+                print('->>')
                 question, genre = None, None
                 if prev_question:
                     prev_question = ujson.loads(prev_question)
