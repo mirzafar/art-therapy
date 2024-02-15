@@ -179,6 +179,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     lemmas = m.lemmatize(text)
                     risk_words = RISK_WORDS + (prev_question.get('details') or {}).get('risk_words', [])
 
+                    flag = True
                     for x in risk_words:
                         if len(list(set(x) & set(lemmas))) == len(x):
                             await tgclient.api_call(
@@ -201,7 +202,10 @@ class TelegramWebhookHandler(HTTPMethodView):
                             )
 
                             await self.finalize(customer['id'])
-                            break
+                            flag = False
+
+                    if flag is False:
+                        break
 
                 if not question:
                     question = questions.pop(0) if questions else {}
