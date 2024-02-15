@@ -1,6 +1,7 @@
 import random
 
 import ujson
+from pymystem3 import Mystem
 from sanic import response
 from sanic.views import HTTPMethodView
 
@@ -11,6 +12,12 @@ from settings import settings
 from utils.dicts import DictUtils
 from utils.lists import ListUtils
 from utils.strs import StrUtils
+
+RISK_WORDS = [
+    ['суицид'], ['самоубийства'], ['жизненный', 'ситуация'], ['плохой', 'аппетит']
+]
+
+m = Mystem()
 
 
 class TelegramWebhookHandler(HTTPMethodView):
@@ -168,6 +175,30 @@ class TelegramWebhookHandler(HTTPMethodView):
                             if text == x['text']:
                                 question = None
                                 genre = x['callback_data']
+
+                    lemmas = m.lemmatize(text)
+                    risk_words = RISK_WORDS + prev_question.get('details', {}).get('risk_words', [])
+
+                    for x in risk_words:
+                        if len(list(set(x) & set(lemmas))) == len(x):
+                            await tgclient.api_call(
+                                payload={
+                                    'chat_id': chat_id,
+                                    'text': 'Рекомендую обратиться к профессиональному психологу или психотерапевту,'
+                                            ' если это беспокоит длительное время. Арт-терапия может быть эффективным '
+                                            'дополнением к другим методам лечения депрессии, таким как медикаментозная '
+                                            'терапия и психотерапия',
+                                    'reply_markup': {
+                                        'keyboard': [
+                                            [{
+                                                'text': '🔄 Пройти заново',
+                                            }]
+                                        ],
+                                        'one_time_keyboard': True,
+                                        'resize_keyboard': True
+                                    }
+                                }
+                            )
 
                 if not question:
                     question = questions.pop(0) if questions else {}
