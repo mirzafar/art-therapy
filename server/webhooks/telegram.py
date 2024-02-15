@@ -163,10 +163,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             while success:
                 prev_question = await cache.get(f'art:telegram:prev_question:{customer["id"]}')
 
-                if not questions:
-                    success = False
-                    continue
-                elif questions:
+                if questions:
                     pass
                 elif not prev_question:
                     success = False
@@ -245,6 +242,9 @@ class TelegramWebhookHandler(HTTPMethodView):
                     else:
                         payload['text'] = question['text']
 
+                    await cache.set(f'art:telegram:prev_question:{customer["id"]}', ujson.dumps(question))
+                    await cache.set(f'art:telegram:questions:{customer["id"]}', ujson.dumps(questions))
+
                 else:
                     payload['text'] = 'Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!'
                     await self.finalize(customer['id'])
@@ -273,8 +273,6 @@ class TelegramWebhookHandler(HTTPMethodView):
                         }
                     })
 
-                await cache.set(f'art:telegram:prev_question:{customer["id"]}', ujson.dumps(question))
-                await cache.set(f'art:telegram:questions:{customer["id"]}', ujson.dumps(questions))
                 await tgclient.api_call(method_name=method, payload=payload)
                 break
 
