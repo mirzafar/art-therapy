@@ -234,6 +234,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                 await cache.set(f'art:telegram:prev_question:{customer["id"]}', ujson.dumps(question))
                 await cache.set(f'art:telegram:questions:{customer["id"]}', ujson.dumps(questions))
                 await tgclient.api_call(method_name=method, payload=payload)
+                break
 
         if success is False:
             await tgclient.api_call(
