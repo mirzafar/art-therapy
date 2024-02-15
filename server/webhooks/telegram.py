@@ -50,13 +50,15 @@ class TelegramWebhookHandler(HTTPMethodView):
     async def finalize(cls, customer_id):
         await cache.delete(f'art:question:name:{customer_id}')
         await cache.delete(f'art:telegram:items:{customer_id}')
-        await cache.delete(f'art:telegram:prev_questions:{customer_id}')
+        await cache.delete(f'art:telegram:prev_question:{customer_id}')
 
     async def get(self, request):
         return response.json({})
 
     async def post(self, request):
         data = request.json
+
+        print(f'[post] data: {data}')
 
         message = DictUtils.as_dict(data.get('message'))
         callback_query = DictUtils.as_dict(data.get('callback_query'))
@@ -153,7 +155,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     success = False
                     continue
 
-                prev_question = await cache.get(f'art:telegram:prev_questions:{customer["id"]}')
+                prev_question = await cache.get(f'art:telegram:prev_question:{customer["id"]}')
 
                 question, genre = None, None
                 if prev_question:
@@ -229,7 +231,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                         }
                     })
 
-                await cache.set(f'art:telegram:prev_questions:{customer["id"]}', question)
+                await cache.set(f'art:telegram:prev_question:{customer["id"]}', ujson.dumps(question))
+                await cache.set(f'art:telegram:questions:{customer["id"]}', ujson.dumps(questions))
                 await tgclient.api_call(method_name=method, payload=payload)
 
         if success is False:
