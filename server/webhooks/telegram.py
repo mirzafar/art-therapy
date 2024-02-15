@@ -1,4 +1,4 @@
-from pprint import pprint
+import random
 
 import ujson
 from sanic import response
@@ -9,18 +9,53 @@ from core.cache import cache
 from core.db import db
 from settings import settings
 from utils.dicts import DictUtils
-from utils.ints import IntUtils
+from utils.lists import ListUtils
 from utils.strs import StrUtils
 
 
 class TelegramWebhookHandler(HTTPMethodView):
+    @classmethod
+    async def generate_questions(cls, customer_id):
+        items = await db.fetch(
+            '''
+            SELECT c.id, count(*) AS count_questions, array_agg(q.id) AS question_ids, c.attempt
+            FROM public.questions q
+            LEFT JOIN public.categories c on c.id = q.category_id
+            GROUP BY c.id
+            '''
+        )
+        question_ids = []
+        for item in items:
+            if item.get('count_questions') > item.get('attempt'):
+                question_ids.extend(random.sample(item['question_ids'], item.get('attempt')) or [])
+
+        questions = ListUtils.to_list_of_dicts(await db.fetch(
+            '''
+            SELECT *
+            FROM public.questions
+            WHERE id = ANY($1)
+            ORDER BY position
+            ''',
+            question_ids
+        )) or []
+
+        print()
+        print('generate_questions', questions)
+
+        await cache.set(f'art:telegram:questions:{customer_id}', ujson.dumps(questions))
+
+        return questions
+
+    @classmethod
+    async def finalize(cls, customer_id):
+        await cache.delete(f'art:question:name:{customer_id}')
+        await cache.delete(f'art:telegram:items:{customer_id}')
+
     async def get(self, request):
         return response.json({})
 
     async def post(self, request):
         data = request.json
-
-        print(f'telegram_message: {data}')
 
         message = DictUtils.as_dict(data.get('message'))
         callback_query = DictUtils.as_dict(data.get('callback_query'))
@@ -79,21 +114,20 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         text = None
         success = False
+        questions = None
         if message and message.get('text'):
             text = message['text']
 
         if callback_query and callback_query.get('data'):
             text = callback_query['data']
 
-        position = IntUtils.to_int(await cache.get(f'art:question:position:{customer["id"]}'))
-        data = await cache.get(f'art:question:data:{customer["id"]}') or {}
-
         if text and text.startswith('🔄'):
-            position, data = 1, {}
+            await self.finalize(customer['id'])
+            questions = await self.generate_questions(customer['id'])
 
         if await cache.get(f'art:question:name:{customer["id"]}'):
             await cache.delete(f'art:question:name:{customer["id"]}')
-            position, data = 1, {}
+            questions = await self.generate_questions(customer['id'])
 
             await db.execute(
                 '''
@@ -105,58 +139,36 @@ class TelegramWebhookHandler(HTTPMethodView):
                 text
             )
 
-        if text and position:
-            success = True
-            method = 'sendMessage'
+        if not questions:
+            questions = await cache.get(f'art:telegram:questions:{customer["id"]}')
 
-            if data:
-                data = ujson.loads(data)
+        if text:
+            success, method = True, 'sendMessage'
+            questions = ujson.loads(questions)
 
-            if str(position - 1) in data:
-                data[str(position - 1)]['answer'] = text
-
-            prev_question = await db.fetchrow(
-                '''
-                SELECT *
-                FROM public.questions
-                WHERE position = $1
-                ''',
-                position - 1
-            )
+            prev_question = await cache.get(f'art:telegram:prev_questions:{customer["id"]}')
 
             question, genre = None, None
-            if prev_question and prev_question['buttons']:
-                question = prev_question
-                for x in prev_question['buttons']:
-                    if text == x['text']:
-                        question = None
-                        genre = x['callback_data']
+            if prev_question:
+                prev_question = ujson.loads(prev_question)
+                if prev_question['buttons']:
+                    question = prev_question
+                    for x in prev_question['buttons']:
+                        if text == x['text']:
+                            question = None
+                            genre = x['callback_data']
 
             if not question:
-                question = await db.fetchrow(
-                    '''
-                    SELECT *
-                    FROM public.questions
-                    WHERE position = $1
-                    ''',
-                    position
-                ) or {}
-
-                await cache.set(f'art:question:position:{customer["id"]}', position + 1)
-                await cache.set(f'art:question:data:{customer["id"]}', ujson.dumps(data))
+                question = questions.pop(0) if questions else {}
 
             payload = {'chat_id': chat_id}
 
             if question:
-                data[position] = {
-                    'question': question['text'],
-                    'answer': None
-                }
-
                 if question.get('media'):
                     payload['audio'] = question['media']['url']
                     payload['caption'] = question['text']
                     method = 'sendAudio'
+
                 elif question.get('details') and question['details'].get('action') == 'get_tunes':
                     tunes = await db.fetch(
                         '''
@@ -182,9 +194,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
             else:
                 payload['text'] = 'Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!'
-
-                await cache.delete(f'art:question:position:{customer["id"]}')
-                await cache.delete(f'art:question:data:{customer["id"]}')
+                await self.finalize(customer['id'])
 
             if question and question['buttons']:
                 payload.update({
@@ -212,6 +222,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     }
                 })
 
+            await cache.set(f'art:telegram:prev_questions:{customer["id"]}', question)
             await tgclient.api_call(method_name=method, payload=payload)
 
         if success is False:
