@@ -146,86 +146,91 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         if text:
             success, method = True, 'sendMessage'
-            questions = ujson.loads(questions)
+            while success:
+                if not questions:
+                    success = False
+                    continue
 
-            prev_question = await cache.get(f'art:telegram:prev_questions:{customer["id"]}')
+                questions = ujson.loads(questions)
 
-            question, genre = None, None
-            if prev_question:
-                prev_question = ujson.loads(prev_question)
-                if prev_question['buttons']:
-                    question = prev_question
-                    for x in prev_question['buttons']:
-                        if text == x['text']:
-                            question = None
-                            genre = x['callback_data']
+                prev_question = await cache.get(f'art:telegram:prev_questions:{customer["id"]}')
 
-            if not question:
-                question = questions.pop(0) if questions else {}
+                question, genre = None, None
+                if prev_question:
+                    prev_question = ujson.loads(prev_question)
+                    if prev_question['buttons']:
+                        question = prev_question
+                        for x in prev_question['buttons']:
+                            if text == x['text']:
+                                question = None
+                                genre = x['callback_data']
 
-            payload = {'chat_id': chat_id}
+                if not question:
+                    question = questions.pop(0) if questions else {}
 
-            if question:
-                if question.get('media'):
-                    payload['audio'] = question['media']['url']
-                    payload['caption'] = question['text']
-                    method = 'sendAudio'
+                payload = {'chat_id': chat_id}
 
-                elif question.get('details') and question['details'].get('action') == 'get_tunes':
-                    tunes = await db.fetch(
-                        '''
-                        SELECT *
-                        FROM public.tunes
-                        WHERE genre = $1
-                        ''',
-                        genre
-                    )
-                    if tunes:
-                        for tune in tunes:
-                            await tgclient.api_call(
-                                method_name='sendAudio',
-                                payload={
-                                    'chat_id': chat_id,
-                                    'title': tune['title'],
-                                    'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
-                                }
-                            )
-                    payload['text'] = question['text']
+                if question:
+                    if question.get('media'):
+                        payload['audio'] = question['media']['url']
+                        payload['caption'] = question['text']
+                        method = 'sendAudio'
+
+                    elif question.get('details') and question['details'].get('action') == 'get_tunes':
+                        tunes = await db.fetch(
+                            '''
+                            SELECT *
+                            FROM public.tunes
+                            WHERE genre = $1
+                            ''',
+                            genre
+                        )
+                        if tunes:
+                            for tune in tunes:
+                                await tgclient.api_call(
+                                    method_name='sendAudio',
+                                    payload={
+                                        'chat_id': chat_id,
+                                        'title': tune['title'],
+                                        'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
+                                    }
+                                )
+                        payload['text'] = question['text']
+                    else:
+                        payload['text'] = question['text']
+
                 else:
-                    payload['text'] = question['text']
+                    payload['text'] = 'Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!'
+                    await self.finalize(customer['id'])
 
-            else:
-                payload['text'] = 'Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!'
-                await self.finalize(customer['id'])
+                if question and question['buttons']:
+                    payload.update({
+                        'reply_markup': {
+                            'keyboard': [
+                                [{
+                                    'text': button['text'],
+                                    # 'callback_data': button['callback_data']
+                                }] for button in question['buttons']
+                            ],
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
+                    })
+                else:
+                    payload.update({
+                        'reply_markup': {
+                            'keyboard': [
+                                [{
+                                    'text': '🔄 Пройти заново',
+                                }]
+                            ],
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
+                    })
 
-            if question and question['buttons']:
-                payload.update({
-                    'reply_markup': {
-                        'keyboard': [
-                            [{
-                                'text': button['text'],
-                                # 'callback_data': button['callback_data']
-                            }] for button in question['buttons']
-                        ],
-                        'one_time_keyboard': True,
-                        'resize_keyboard': True
-                    }
-                })
-            else:
-                payload.update({
-                    'reply_markup': {
-                        'keyboard': [
-                            [{
-                                'text': '🔄 Пройти заново',
-                            }]
-                        ],
-                        'one_time_keyboard': True,
-                        'resize_keyboard': True
-                    }
-                })
-
-            await cache.set(f'art:telegram:prev_questions:{customer["id"]}', question)
-            await tgclient.api_call(method_name=method, payload=payload)
+                await cache.set(f'art:telegram:prev_questions:{customer["id"]}', question)
+                await tgclient.api_call(method_name=method, payload=payload)
 
         if success is False:
             await tgclient.api_call(
