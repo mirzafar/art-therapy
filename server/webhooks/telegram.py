@@ -47,6 +47,7 @@ class TelegramWebhookHandler(HTTPMethodView):
         )) or []
 
         await cache.set(f'art:telegram:questions:{customer_id}', ujson.dumps(questions))
+        print('question', questions)
 
         return questions
 
