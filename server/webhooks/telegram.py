@@ -160,6 +160,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     success = False
                     continue
 
+
                 question, genre = None, None
                 if prev_question:
                     prev_question = ujson.loads(prev_question)
