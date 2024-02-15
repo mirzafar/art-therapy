@@ -143,6 +143,8 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         if not questions:
             questions = await cache.get(f'art:telegram:questions:{customer["id"]}')
+            if questions:
+                questions = ujson.loads(questions)
 
         if text:
             success, method = True, 'sendMessage'
@@ -150,8 +152,6 @@ class TelegramWebhookHandler(HTTPMethodView):
                 if not questions:
                     success = False
                     continue
-
-                questions = ujson.loads(questions)
 
                 prev_question = await cache.get(f'art:telegram:prev_questions:{customer["id"]}')
 
