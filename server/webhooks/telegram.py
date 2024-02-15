@@ -200,6 +200,9 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 }
                             )
 
+                            await self.finalize(customer['id'])
+                            break
+
                 if not question:
                     question = questions.pop(0) if questions else {}
 
