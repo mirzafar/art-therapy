@@ -17,6 +17,10 @@ RISK_WORDS = [
     ['суицид'], ['самоубийства'], ['жизненный', 'ситуация'], ['плохой', 'аппетит']
 ]
 
+RESTART_BUTTON = [{
+    'text': '🔄 Пройти заново',
+}]
+
 m = Mystem()
 
 
@@ -35,6 +39,8 @@ class TelegramWebhookHandler(HTTPMethodView):
         for item in items:
             if item.get('count_questions') > item.get('attempt'):
                 question_ids.extend(random.sample(item['question_ids'], item.get('attempt')) or [])
+            else:
+                question_ids.extend(item['question_ids'])
 
         questions = ListUtils.to_list_of_dicts(await db.fetch(
             '''
@@ -47,7 +53,6 @@ class TelegramWebhookHandler(HTTPMethodView):
         )) or []
 
         await cache.set(f'art:telegram:questions:{customer_id}', ujson.dumps(questions))
-        print('question', questions)
 
         return questions
 
@@ -192,9 +197,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                             'терапия и психотерапия',
                                     'reply_markup': {
                                         'keyboard': [
-                                            [{
-                                                'text': '🔄 Пройти заново',
-                                            }]
+                                            RESTART_BUTTON
                                         ],
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True
@@ -253,7 +256,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 [{
                                     'text': button['text'],
                                     # 'callback_data': button['callback_data']
-                                }] for button in question['buttons']
+                                }] for button in question['buttons'] + RESTART_BUTTON
                             ],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
@@ -263,9 +266,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     payload.update({
                         'reply_markup': {
                             'keyboard': [
-                                [{
-                                    'text': '🔄 Пройти заново',
-                                }]
+                                RESTART_BUTTON
                             ],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
@@ -282,6 +283,13 @@ class TelegramWebhookHandler(HTTPMethodView):
                 payload={
                     'chat_id': chat_id,
                     'text': 'В системе ничего не найдено',
+                    'reply_markup': {
+                        'keyboard': [
+                            RESTART_BUTTON
+                        ],
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
                 }
             )
 
