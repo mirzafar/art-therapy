@@ -50,6 +50,7 @@ class TelegramWebhookHandler(HTTPMethodView):
     async def finalize(cls, customer_id):
         await cache.delete(f'art:question:name:{customer_id}')
         await cache.delete(f'art:telegram:items:{customer_id}')
+        await cache.delete(f'art:telegram:prev_questions:{customer_id}')
 
     async def get(self, request):
         return response.json({})
@@ -99,6 +100,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             )
 
         if message and message.get('text') == '/start':
+            await self.finalize(customer['id'])
             await tgclient.api_call(
                 payload={
                     'chat_id': chat_id,
