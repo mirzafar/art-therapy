@@ -25,11 +25,17 @@ m = Mystem()
 
 MENU_BUTTONS = [
     [{
+        'text': 'ℹ️ О боте',
+    }],
+    [{
         'text': '📃️ Справка',
     }],
     [{
-        'text': 'ℹ️ О боте',
-    }]
+        'text': '🎧 Музыкальная библиотека',
+    }],
+    [{
+        'text': '🎼 Генерация музыки',
+    }],
 ]
 
 
@@ -123,15 +129,20 @@ class TelegramWebhookHandler(HTTPMethodView):
         if message and message.get('text') == '/start':
             await self.finalize(customer['id'])
             await tgclient.api_call(
+                method_name='sendPhoto',
                 payload={
                     'chat_id': chat_id,
-                    'text': 'Привет! Меня зовут TulparIfy. '
-                            'Я здесь, чтобы помочь тебе с помощью арт-терапии через музыку.\n'
-                            'Как тебя зовут?'
+                    'caption': '*Подбор музыки, соответствующей текущему эмоциональному состоянию пользователя '
+                               'Генерация мелодии на основе заданного настроения и предпочтений пользователя*',
+                    'photo': 'https://art.ttshop.kz/static/uploads/57/46/5746d2c9-ed64-41f9-9039-c771be0d5fb5.png',
+                    "parse_mode": "Markdown",
+                    'reply_markup': {
+                        'keyboard': MENU_BUTTONS,
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
                 }
             )
-
-            await cache.set(f'art:question:name:{customer["id"]}', '1')
 
             return response.json({})
 
@@ -144,7 +155,7 @@ class TelegramWebhookHandler(HTTPMethodView):
         if callback_query and callback_query.get('data'):
             text = callback_query['data']
 
-        if text and text.startswith('🔄'):
+        if text and (text.startswith('🔄') or text.startswith('🎼')):
             await self.finalize(customer['id'])
             questions = await self.generate_questions(customer['id'])
 
@@ -310,7 +321,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
                 return response.json({})
 
-            if text and text.startswith('ℹ️'):
+            elif text and text.startswith('ℹ️'):
                 await tgclient.api_call(
                     method_name='sendPhoto',
                     payload={
@@ -321,6 +332,25 @@ class TelegramWebhookHandler(HTTPMethodView):
                         "parse_mode": "Markdown",
                         'reply_markup': {
                             'keyboard': MENU_BUTTONS,
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
+                    }
+                )
+
+                return response.json({})
+
+            elif text and text.startswith('🎧'):
+                await tgclient.api_call(
+                    payload={
+                        'chat_id': chat_id,
+                        'text': 'Выберите',
+                        'reply_markup': {
+                            'keyboard': [
+                                [{'text': 'Поиск музыки'}],
+                                [{'text': 'Популярное'}],
+                                [{'text': 'Новинки'}],
+                            ],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
                         }
