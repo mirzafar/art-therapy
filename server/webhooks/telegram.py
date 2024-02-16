@@ -23,6 +23,15 @@ RESTART_BUTTON = [{
 
 m = Mystem()
 
+MENU_BUTTONS = [
+    [{
+        'text': '📃️ Справка',
+    }],
+    [{
+        'text': 'ℹ️ О боте',
+    }]
+]
+
 
 class TelegramWebhookHandler(HTTPMethodView):
     @classmethod
@@ -277,18 +286,81 @@ class TelegramWebhookHandler(HTTPMethodView):
                 break
 
         if success is False:
-            await tgclient.api_call(
-                payload={
-                    'chat_id': chat_id,
-                    'text': 'В системе ничего не найдено',
-                    'reply_markup': {
-                        'keyboard': [
-                            RESTART_BUTTON
-                        ],
-                        'one_time_keyboard': True,
-                        'resize_keyboard': True
+            if text and text.startswith('📃️'):
+                buttons = await db.fetchval(
+                    '''
+                    SELECT array_agg(title)
+                    FROM public.kbase
+                    WHERE type = 'reference'
+                    '''
+                )
+                await tgclient.api_call(
+                    payload={
+                        'chat_id': chat_id,
+                        'text': 'Выберите',
+                        'reply_markup': {
+                            'keyboard': [
+                                [{'text': x}] for x in buttons
+                            ],
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
                     }
-                }
+                )
+
+                return response.json({})
+
+            if text and text.startswith('ℹ️'):
+                await tgclient.api_call(
+                    method_name='sendPhoto',
+                    payload={
+                        'chat_id': chat_id,
+                        'caption': '*Подбор музыки, соответствующей текущему эмоциональному состоянию пользователя '
+                                   'Генерация мелодии на основе заданного настроения и предпочтений пользователя*',
+                        'photo': 'https://art.ttshop.kz/static/uploads/57/46/5746d2c9-ed64-41f9-9039-c771be0d5fb5.png',
+                        "parse_mode": "Markdown",
+                        'reply_markup': {
+                            'keyboard': MENU_BUTTONS,
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
+                    }
+                )
+
+                return response.json({})
+
+            kbase = await db.fetchrow(
+                '''
+                SELECT *
+                FROM public.kbase
+                WHERE title = $1
+                ''',
+                text
             )
+            if kbase:
+                await tgclient.api_call(
+                    payload={
+                        'chat_id': chat_id,
+                        'text': kbase['response'],
+                        'reply_markup': {
+                            'keyboard': MENU_BUTTONS,
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
+                    }
+                )
+
+            else:
+                await tgclient.api_call(
+                    payload={
+                        'chat_id': chat_id,
+                        'text': 'В системе ничего не найдено',
+                        'reply_markup': {
+                            'keyboard': MENU_BUTTONS,
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
+                    }
+                )
 
         return response.json({})
