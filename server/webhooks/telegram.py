@@ -332,7 +332,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                         'reply_markup': {
                             'keyboard': [
                                 [{'text': x}] for x in buttons
-                            ],
+                            ] + HOME_BUTTON,
                             'one_time_keyboard': True,
                             'resize_keyboard': True
                         }
