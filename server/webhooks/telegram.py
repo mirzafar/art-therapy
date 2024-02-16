@@ -17,11 +17,11 @@ RISK_WORDS = [
     ['суицид'], ['самоубийства'], ['жизненный', 'ситуация'], ['плохой', 'аппетит']
 ]
 
-RESTART_BUTTON = [{
-    'text': '🔄 Пройти заново',
-}]
-
 m = Mystem()
+
+HOME_BUTTON = [{
+    'text': '🏠 Вернуться в меню',
+}]
 
 MENU_BUTTONS = [
     [{
@@ -41,14 +41,16 @@ MENU_BUTTONS = [
 
 class TelegramWebhookHandler(HTTPMethodView):
     @classmethod
-    async def generate_questions(cls, customer_id):
+    async def generate_questions(cls, customer_id, _type):
         items = await db.fetch(
             '''
             SELECT c.id, count(*) AS count_questions, array_agg(q.id) AS question_ids, c.attempt
             FROM public.questions q
             LEFT JOIN public.categories c on c.id = q.category_id
+            WHERE c.type = $1
             GROUP BY c.id
-            '''
+            ''',
+            _type
         )
         question_ids = []
         for item in items:
@@ -155,9 +157,29 @@ class TelegramWebhookHandler(HTTPMethodView):
         if callback_query and callback_query.get('data'):
             text = callback_query['data']
 
-        if text and (text.startswith('🔄') or text.startswith('🎼')):
+        if text and text.startswith('🏠'):
             await self.finalize(customer['id'])
-            questions = await self.generate_questions(customer['id'])
+            await tgclient.api_call(
+                payload={
+                    'chat_id': chat_id,
+                    'text': 'Выберите',
+                    'reply_markup': {
+                        'keyboard': MENU_BUTTONS,
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
+                }
+            )
+
+            return response.json({})
+
+        if text and text.startswith('🎼'):
+            await self.finalize(customer['id'])
+            questions = await self.generate_questions(customer['id'], 'ai')
+
+        if text and text.startswith('🔍'):
+            await self.finalize(customer['id'])
+            questions = await self.generate_questions(customer['id'], 'search')
 
         if await cache.get(f'art:question:name:{customer["id"]}'):
             await cache.delete(f'art:question:name:{customer["id"]}')
@@ -213,9 +235,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                             'дополнением к другим методам лечения депрессии, таким как медикаментозная '
                                             'терапия и психотерапия',
                                     'reply_markup': {
-                                        'keyboard': [
-                                            RESTART_BUTTON
-                                        ],
+                                        'keyboard': MENU_BUTTONS,
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True
                                     }
@@ -276,7 +296,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 [{
                                     'text': button['text'],
                                     # 'callback_data': button['callback_data']
-                                }] for button in question['buttons'] + RESTART_BUTTON
+                                }] for button in question['buttons'] + HOME_BUTTON
                             ],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
@@ -286,7 +306,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     payload.update({
                         'reply_markup': {
                             'keyboard': [
-                                RESTART_BUTTON
+                                HOME_BUTTON
                             ],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
@@ -347,9 +367,9 @@ class TelegramWebhookHandler(HTTPMethodView):
                         'text': 'Выберите',
                         'reply_markup': {
                             'keyboard': [
-                                [{'text': 'Поиск музыки'}],
-                                [{'text': 'Популярное'}],
-                                [{'text': 'Новинки'}],
+                                [{'text': '🔍 Поиск музыки'}],
+                                [{'text': '🔥 Популярное'}],
+                                [{'text': '✨ Новинки'}],
                             ],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
