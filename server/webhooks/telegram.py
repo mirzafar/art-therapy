@@ -82,8 +82,8 @@ class TelegramWebhookHandler(HTTPMethodView):
             f'art:question:name:{customer_id}',
             f'art:telegram:prev_question:{customer_id}',
             f'art:telegram:words:{customer_id}',
-            f'art:telegram:audio:name:{customer_id}'
-            f'art:telegram:questions:end:{customer_id}'
+            f'art:telegram:audio:name:{customer_id}',
+            f'art:telegram:questions:rating:{customer_id}'
         ]
         await cache.delete(*keys)
 
@@ -360,6 +360,23 @@ class TelegramWebhookHandler(HTTPMethodView):
 
             return response.json({})
 
+        elif await cache.setex(f'art:telegram:questions:rating:{customer["id"]}', 600, '1'):
+            await self.finalize(customer['id'])
+            await tgclient.api_call(
+                method_name='sendMessage',
+                payload={
+                    'chat_id': chat_id,
+                    'text': 'Спасибо за вашу обратную связь!',
+                    'reply_markup': {
+                        'keyboard': MENU_BUTTONS,
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
+                }
+            )
+
+            return response.json({})
+
         if await cache.get(f'art:question:name:{customer["id"]}'):
             await cache.delete(f'art:question:name:{customer["id"]}')
 
@@ -482,15 +499,11 @@ class TelegramWebhookHandler(HTTPMethodView):
                     await cache.setex(f'art:telegram:questions:{customer["id"]}', 600, ujson.dumps(questions))
 
                 else:
-                    if await cache.get(f'art:telegram:questions:end:{customer["id"]}'):
-                        await self.finalize(customer['id'])
-                        payload['text'] = 'Спасибо за вашу обратную связь!'
-                    else:
-                        end = True
+                    end = True
 
                 if end:
-                    await cache.setex(f'art:telegram:questions:end:{customer["id"]}', 600, '1')
                     if prev_question and prev_question.get('details', {}).get('is_search'):
+                        await cache.setex(f'art:telegram:questions:rating:{customer["id"]}', 600, '1')
                         payload.update({
                             'text': 'Как вам эта музыка? '
                                     'Какие элементы музыки вам больше всего понравились/не понравились?',
