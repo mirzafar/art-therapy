@@ -399,7 +399,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 [{'text': '🔍 Поиск музыки'}],
                                 [{'text': '🔥 Популярное'}],
                                 [{'text': '✨ Новинки'}],
-                            ],
+                            ] + [HOME_BUTTON],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
                         }
