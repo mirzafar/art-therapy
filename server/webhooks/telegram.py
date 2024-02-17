@@ -77,12 +77,14 @@ class TelegramWebhookHandler(HTTPMethodView):
 
     @classmethod
     async def finalize(cls, customer_id):
-        await cache.delete(f'art:telegram:questions:{customer_id}')
-        await cache.delete(f'art:question:name:{customer_id}')
-        await cache.delete(f'art:telegram:prev_question:{customer_id}')
-        await cache.delete(f'art:telegram:words:{customer_id}')
-        await cache.delete(f'art:telegram:audio:name:{customer_id}')
-        # await cache.delete(f'art:telegram:audio:{customer_id}')
+        keys = [
+            f'art:telegram:questions:{customer_id}',
+            f'art:question:name:{customer_id}',
+            f'art:telegram:prev_question:{customer_id}',
+            f'art:telegram:words:{customer_id}',
+            f'art:telegram:audio:name:{customer_id}'
+        ]
+        await cache.delete(*keys)
 
     @classmethod
     async def generate_turn(cls, customer_id, chat_id):
@@ -347,8 +349,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                 }
             )
 
-            await cache.delete(f'art:telegram:audio:name:{customer["id"]}')
-            await cache.delete(f'art:telegram:audio:{customer["id"]}')
+            await cache.delete(f'art:telegram:audio:name:{customer["id"]}', f'art:telegram:audio:{customer["id"]}')
 
             return response.json({})
 
@@ -541,25 +542,6 @@ class TelegramWebhookHandler(HTTPMethodView):
 
                 return response.json({})
 
-            elif text and text.startswith('🎧'):
-                await tgclient.api_call(
-                    payload={
-                        'chat_id': chat_id,
-                        'text': 'Выберите',
-                        'reply_markup': {
-                            'keyboard': [
-                                            [{'text': '🔍 Поиск музыки'}],
-                                            [{'text': '🔥 Популярное'}],
-                                            [{'text': '✨ Новинки'}],
-                                        ] + [HOME_BUTTON],
-                            'one_time_keyboard': True,
-                            'resize_keyboard': True
-                        }
-                    }
-                )
-
-                return response.json({})
-
             kbase = await db.fetchrow(
                 '''
                 SELECT *
@@ -573,6 +555,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     payload={
                         'chat_id': chat_id,
                         'text': kbase['response'],
+                        'parse_mode': 'Markdown',
                         'reply_markup': {
                             'keyboard': MENU_BUTTONS,
                             'one_time_keyboard': True,
