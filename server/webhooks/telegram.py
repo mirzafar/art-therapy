@@ -79,7 +79,7 @@ class TelegramWebhookHandler(HTTPMethodView):
         await cache.delete(f'art:telegram:prev_question:{customer_id}')
         await cache.delete(f'art:telegram:words:{customer_id}')
         await cache.delete(f'art:telegram:audio:name:{customer_id}')
-        await cache.delete(f'art:telegram:audio:{customer_id}')
+        # await cache.delete(f'art:telegram:audio:{customer_id}')
 
     @classmethod
     async def generate_turn(cls, customer_id, chat_id):
