@@ -284,6 +284,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                 }
             )
 
+            return response.json({})
+
         elif text and text.startswith('🛠'):
             await self.finalize(customer['id'])
             questions = await self.generate_questions(customer['id'], 'search')
