@@ -458,14 +458,13 @@ class TelegramWebhookHandler(HTTPMethodView):
 
                 else:
                     end = True
-                    payload['text'] = 'Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!'
-                    await self.finalize(customer['id'])
+                    payload['text'] = 'Выберите'
 
                 if end:
                     payload.update({
                         'reply_markup': {
                             'keyboard': [
-                                            [{'text': '🔎 Генерация трека'}]
+                                            [{'text': '🔎 Генерировать трек'}]
                                         ] + [HOME_BUTTON],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
