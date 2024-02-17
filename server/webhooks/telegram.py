@@ -78,6 +78,7 @@ class TelegramWebhookHandler(HTTPMethodView):
         await cache.delete(f'art:telegram:questions:{customer_id}')
         await cache.delete(f'art:question:name:{customer_id}')
         await cache.delete(f'art:telegram:prev_question:{customer_id}')
+        await cache.delete(f'art:telegram:words:{customer_id}')
 
     async def get(self, request):
         return response.json({})
@@ -284,6 +285,9 @@ class TelegramWebhookHandler(HTTPMethodView):
                 payload = {'chat_id': chat_id}
 
                 if question:
+                    if genre:
+                        await cache.lpush(f'art:telegram:words:{customer["id"]}', genre)
+
                     if question.get('media'):
                         payload['audio'] = question['media']['url']
                         payload['caption'] = question['text']
