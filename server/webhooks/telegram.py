@@ -320,7 +320,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                         if words:
                             tune = await db.fetchrow(
                                 '''
-                                SELECT id
+                                SELECT *
                                 FROM public.tunes
                                 ORDER BY (
                                     SELECT COUNT(*)
