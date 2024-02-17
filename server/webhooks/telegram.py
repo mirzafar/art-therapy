@@ -69,7 +69,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             question_ids
         )) or []
 
-        await cache.setex(f'art:telegram:questions:{customer_id}', ujson.dumps(questions), 600)
+        await cache.setex(f'art:telegram:questions:{customer_id}', 600, ujson.dumps(questions))
 
         return questions
 
@@ -160,7 +160,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     }
                 }
             )
-            await cache.setex(f'art:question:name:{customer["id"]}', '1', 600)
+            await cache.setex(f'art:question:name:{customer["id"]}', 600, '1')
 
             return response.json({})
 
@@ -310,8 +310,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                     else:
                         payload['text'] = question['text']
 
-                    await cache.setex(f'art:telegram:prev_question:{customer["id"]}', ujson.dumps(question), 600)
-                    await cache.setex(f'art:telegram:questions:{customer["id"]}', ujson.dumps(questions), 600)
+                    await cache.setex(f'art:telegram:prev_question:{customer["id"]}', 600, ujson.dumps(question))
+                    await cache.setex(f'art:telegram:questions:{customer["id"]}', 600, ujson.dumps(questions))
 
                 else:
                     payload['text'] = 'Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!'
