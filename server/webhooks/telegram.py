@@ -292,18 +292,57 @@ class TelegramWebhookHandler(HTTPMethodView):
             questions = await self.generate_questions(customer['id'], 'ai')
 
         elif text and text.startswith('\u2069'):
+            await cache.setex(f'art:telegram:audio:name{customer["id"]}', 600, '1')
+            await tgclient.api_call(
+                method_name='sendMessage',
+                payload={
+                    'chat_id': chat_id,
+                    'text': 'Название',
+                    'reply_markup': {
+                        'keyboard': [
+                                        [{'text': '\u2069 Сохранить'}]
+                                    ] + [HOME_BUTTON],
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
+                }
+            )
+            return response.json({})
+
+        elif await cache.get(f'art:telegram:audio:name{customer["id"]}'):
             turn_id = IntUtils.to_int(await cache.get(f'art:telegram:audio:{customer["id"]}'))
+            name = await cache.get(f'art:telegram:audio:name{customer["id"]}')
+            if not name:
+                await tgclient.api_call(
+                    method_name='sendMessage',
+                    payload={
+                        'chat_id': chat_id,
+                        'text': 'Название',
+                        'reply_markup': {
+                            'keyboard': [
+                                            [{'text': '\u2069 Сохранить'}]
+                                        ] + [HOME_BUTTON],
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
+                    }
+                )
+                await cache.setex(f'art:telegram:audio:name{customer["id"]}', 600, '1')
+
+                return response.json({})
+
             if turn_id:
                 t = 'Сохранено'
                 await db.fetchrow(
                     '''
-                    INSERT INTO public.playlist(turn_id, type, customer_id)
-                    VALUES ($1, $2, $3)
+                    INSERT INTO public.playlist(turn_id, type, customer_id, title)
+                    VALUES ($1, $2, $3, $4)
                     RETURNING *
                     ''',
                     turn_id,
                     'save',
-                    customer['id']
+                    customer['id'],
+                    text
                 )
             else:
                 t = 'Ничего не найден'
@@ -424,32 +463,6 @@ class TelegramWebhookHandler(HTTPMethodView):
                         payload['caption'] = question['text']
                         method = 'sendAudio'
 
-                    elif question.get('details') and question['details'].get('action') == 'best_match':
-                        words = await cache.lrange(f'art:telegram:words:{customer["id"]}', 0, -1)
-                        if words:
-                            tune = await db.fetchrow(
-                                '''
-                                SELECT *
-                                FROM public.tunes
-                                ORDER BY (
-                                    SELECT COUNT(*)
-                                    FROM unnest(words) AS element1
-                                    INNER JOIN unnest($1::text[]) AS element2 ON element1 = element2
-                                ) DESC
-                                LIMIT 1;
-                                ''',
-                                list(set(words))
-                            )
-                            if tune:
-                                await tgclient.api_call(
-                                    method_name='sendAudio',
-                                    payload={
-                                        'chat_id': chat_id,
-                                        'title': tune['title'],
-                                        'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
-                                    }
-                                )
-                        payload['text'] = question['text']
                     else:
                         payload['text'] = question['text']
 
