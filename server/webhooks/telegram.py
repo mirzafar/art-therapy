@@ -82,7 +82,6 @@ class TelegramWebhookHandler(HTTPMethodView):
     @classmethod
     async def generate_turn(cls, customer_id, chat_id):
         words = await cache.lrange(f'art:telegram:words:{customer_id}', 0, -1)
-        print('->>>>>>')
         if words:
             tune = await db.fetchrow(
                 '''
@@ -139,7 +138,6 @@ class TelegramWebhookHandler(HTTPMethodView):
 
                     }
                 )
-            await cls.finalize(customer_id)
 
         else:
             await tgclient.api_call(
@@ -327,6 +325,8 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         elif text and text.startswith('🔎'):
             await self.generate_turn(customer['id'], chat_id)
+            await self.finalize(customer['id'])
+
             return response.json({})
 
         if await cache.get(f'art:question:name:{customer["id"]}'):
@@ -413,7 +413,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                 if not question:
                     question = questions.pop(0) if questions else {}
 
-                payload = {'chat_id': chat_id}
+                payload, end = {'chat_id': chat_id}, False
 
                 if question:
                     if genre:
@@ -457,10 +457,21 @@ class TelegramWebhookHandler(HTTPMethodView):
                     await cache.setex(f'art:telegram:questions:{customer["id"]}', 600, ujson.dumps(questions))
 
                 else:
+                    end = True
                     payload['text'] = 'Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!'
                     await self.finalize(customer['id'])
 
-                if question and question['buttons']:
+                if end:
+                    payload.update({
+                        'reply_markup': {
+                            'keyboard': [
+                                            [{'text': '🔎 Генерация трека'}]
+                                        ] + [HOME_BUTTON],
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
+                    })
+                elif question and question['buttons']:
                     payload.update({
                         'reply_markup': {
                             'keyboard': [
