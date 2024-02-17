@@ -313,6 +313,30 @@ class TelegramWebhookHandler(HTTPMethodView):
                                     }
                                 )
                         payload['text'] = question['text']
+                    elif question.get('details') and question['details'].get('action') == 'best_match':
+                        tune = await db.fetchrow(
+                            '''
+                            SELECT id
+                            FROM public.tunes
+                            ORDER BY (
+                                SELECT COUNT(*)
+                                FROM unnest(words) AS element1
+                                INNER JOIN unnest($1) AS element2 ON element1 = element2
+                            ) DESC
+                            LIMIT 1;
+                            ''',
+                            await cache.lrange(f'art:telegram:words:{customer["id"]}', 0, -1)
+                        )
+                        if tune:
+                            await tgclient.api_call(
+                                method_name='sendAudio',
+                                payload={
+                                    'chat_id': chat_id,
+                                    'title': tune['title'],
+                                    'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
+                                }
+                            )
+                        payload['text'] = question['text']
                     else:
                         payload['text'] = question['text']
 
@@ -400,10 +424,10 @@ class TelegramWebhookHandler(HTTPMethodView):
                         'text': 'Выберите',
                         'reply_markup': {
                             'keyboard': [
-                                [{'text': '🔍 Поиск музыки'}],
-                                [{'text': '🔥 Популярное'}],
-                                [{'text': '✨ Новинки'}],
-                            ] + [HOME_BUTTON],
+                                            [{'text': '🔍 Поиск музыки'}],
+                                            [{'text': '🔥 Популярное'}],
+                                            [{'text': '✨ Новинки'}],
+                                        ] + [HOME_BUTTON],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
                         }
