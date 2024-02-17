@@ -505,8 +505,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     if prev_question and prev_question.get('details', {}).get('is_search'):
                         await cache.setex(f'art:telegram:questions:rating:{customer["id"]}', 600, '1')
                         payload.update({
-                            'text': 'Как вам эта музыка? '
-                                    'Какие элементы музыки вам больше всего понравились/не понравились?',
+                            'text': 'Какие элементы музыки вам больше всего понравились/не понравились?',
                             'reply_markup': {
                                 'keyboard': [HOME_BUTTON],
                                 'one_time_keyboard': True,
