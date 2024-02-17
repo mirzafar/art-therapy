@@ -83,6 +83,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             f'art:telegram:prev_question:{customer_id}',
             f'art:telegram:words:{customer_id}',
             f'art:telegram:audio:name:{customer_id}'
+            f'art:telegram:questions:end:{customer_id}'
         ]
         await cache.delete(*keys)
 
@@ -482,8 +483,12 @@ class TelegramWebhookHandler(HTTPMethodView):
 
                 else:
                     end = True
+                    if await cache.get(f'art:telegram:questions:end:{customer["id"]}'):
+                        await self.finalize(customer['id'])
+                        break
 
                 if end:
+                    await cache.setex(f'art:telegram:questions:end:{customer["id"]}', 600, '1')
                     if prev_question and prev_question.get('details', {}).get('is_search'):
                         payload.update({
                             'text': 'Как вам эта музыка? Какую оценку вы бы поставили этой музыке по шкале от 1 до 10',
