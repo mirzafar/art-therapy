@@ -47,7 +47,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             FROM public.questions q
             LEFT JOIN public.categories c on c.id = q.category_id
             WHERE c.type = $1
-            GROUP BY c.id
+            GROUP BY c.id, random()
             ''',
             _type
         )
