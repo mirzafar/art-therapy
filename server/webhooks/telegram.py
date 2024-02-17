@@ -35,9 +35,9 @@ MENU_BUTTONS = [
     [{
         'text': '🎼 Генерация музыки',
     }],
-    # [{
-    #     'text': '💬 Диалог с ботом',
-    # }],
+    [{
+        'text': '💬 Пообщаемся',
+    }],
 ]
 
 
@@ -411,7 +411,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                         for x in prev_question['buttons']:
                             if text == x['text']:
                                 question = None
-                                await cache.lpush(f'art:telegram:words:{customer["id"]}', x['callback_data'])
+                                genre = x['callback_data']
+                                await cache.lpush(f'art:telegram:words:{customer["id"]}', genre)
 
                     lemmas = m.lemmatize(text)
                     risk_words = RISK_WORDS + (prev_question.get('details') or {}).get('risk_words', [])
@@ -451,6 +452,28 @@ class TelegramWebhookHandler(HTTPMethodView):
                         payload['caption'] = question['text']
                         method = 'sendAudio'
 
+                    elif question.get('details') and question['details'].get('action') == 'get_tunes':
+                        tune = await db.fetchrow(
+                            '''
+                            SELECT *
+                            FROM public.tunes
+                            WHERE genre = $1
+                            ORDER BY random()
+                            ''',
+                            genre
+                        )
+
+                        if tune:
+                            await tgclient.api_call(
+                                method_name='sendAudio',
+                                payload={
+                                    'chat_id': chat_id,
+                                    'title': tune['title'],
+                                    'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
+                                }
+                            )
+                        payload['text'] = question['text']
+
                     else:
                         payload['text'] = question['text']
 
@@ -459,18 +482,28 @@ class TelegramWebhookHandler(HTTPMethodView):
 
                 else:
                     end = True
-                    payload['text'] = 'Выберите'
 
                 if end:
-                    payload.update({
-                        'reply_markup': {
-                            'keyboard': [
-                                            [{'text': '🔎 Генерировать трек'}]
-                                        ] + [HOME_BUTTON],
-                            'one_time_keyboard': True,
-                            'resize_keyboard': True
-                        }
-                    })
+                    if prev_question and prev_question.get('details', {}).get('is_search'):
+                        payload.update({
+                            'text': 'Как вам эта музыка? Какую оценку вы бы поставили этой музыке по шкале от 1 до 10',
+                            'reply_markup': {
+                                'keyboard': [HOME_BUTTON],
+                                'one_time_keyboard': True,
+                                'resize_keyboard': True
+                            }
+                        })
+                    else:
+                        payload.update({
+                            'text': 'Выберите',
+                            'reply_markup': {
+                                'keyboard': [
+                                                [{'text': '🔎 Генерировать трек'}]
+                                            ] + [HOME_BUTTON],
+                                'one_time_keyboard': True,
+                                'resize_keyboard': True
+                            }
+                        })
                 elif question and question['buttons']:
                     payload.update({
                         'reply_markup': {
