@@ -35,6 +35,9 @@ MENU_BUTTONS = [
     [{
         'text': '🎼 Генерация музыки',
     }],
+    # [{
+    #     'text': '💬 Диалог с ботом',
+    # }],
 ]
 
 
@@ -292,6 +295,10 @@ class TelegramWebhookHandler(HTTPMethodView):
         elif text and text.startswith('🛠'):
             await self.finalize(customer['id'])
             questions = await self.generate_questions(customer['id'], 'ai')
+
+        elif text and text.startswith('💬'):
+            await self.finalize(customer['id'])
+            questions = await self.generate_questions(customer['id'], 'search')
 
         elif text and text.startswith('\u2069'):
             await cache.setex(f'art:telegram:audio:name:{customer["id"]}', 600, '1')
