@@ -501,10 +501,12 @@ class TelegramWebhookHandler(HTTPMethodView):
             if text and text.startswith('📃️'):
                 buttons = await db.fetchval(
                     '''
+                    WITH a AS (SELECT title
+                               FROM public.kbase
+                               WHERE type = 'reference'
+                               ORDER BY id)
                     SELECT array_agg(title)
-                    FROM public.kbase
-                    WHERE type = 'reference'
-                    ORDER BY id
+                    FROM a
                     '''
                 )
                 await tgclient.api_call(
