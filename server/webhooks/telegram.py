@@ -69,7 +69,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             question_ids
         )) or []
 
-        await cache.set(f'art:telegram:questions:{customer_id}', ujson.dumps(questions))
+        await cache.setex(f'art:telegram:questions:{customer_id}', ujson.dumps(questions), 60 * 10)
 
         return questions
 
@@ -146,6 +146,22 @@ class TelegramWebhookHandler(HTTPMethodView):
                 }
             )
 
+            await tgclient.api_call(
+                method_name='sendMessage',
+                payload={
+                    'chat_id': chat_id,
+                    'caption': 'Привет! Меня зовут TulparIfy. '
+                               'Я здесь, чтобы помочь тебе с помощью арт-терапии через музыку.'
+                               'Как тебя зовут?',
+                    'reply_markup': {
+                        'keyboard': [HOME_BUTTON],
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
+                }
+            )
+            await cache.setex(f'art:question:name:{customer["id"]}', '1', 60 * 10)
+
             return response.json({})
 
         text = None
@@ -183,7 +199,6 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         if await cache.get(f'art:question:name:{customer["id"]}'):
             await cache.delete(f'art:question:name:{customer["id"]}')
-            questions = await self.generate_questions(customer['id'])
 
             await db.execute(
                 '''
@@ -193,6 +208,19 @@ class TelegramWebhookHandler(HTTPMethodView):
                 ''',
                 customer['id'],
                 text
+            )
+
+            await tgclient.api_call(
+                method_name='sendMessage',
+                payload={
+                    'chat_id': chat_id,
+                    'caption': 'Выберите',
+                    'reply_markup': {
+                        'keyboard': MENU_BUTTONS,
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
+                }
             )
 
         if not questions:
@@ -282,8 +310,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                     else:
                         payload['text'] = question['text']
 
-                    await cache.set(f'art:telegram:prev_question:{customer["id"]}', ujson.dumps(question))
-                    await cache.set(f'art:telegram:questions:{customer["id"]}', ujson.dumps(questions))
+                    await cache.setex(f'art:telegram:prev_question:{customer["id"]}', ujson.dumps(question), 60 * 10)
+                    await cache.setex(f'art:telegram:questions:{customer["id"]}', ujson.dumps(questions), 60 * 10)
 
                 else:
                     payload['text'] = 'Приятно было с вами общаться!\nСпасибо за то, что воспользовались ботом!'
@@ -295,7 +323,6 @@ class TelegramWebhookHandler(HTTPMethodView):
                             'keyboard': [
                                 [{
                                     'text': button['text'],
-                                    # 'callback_data': button['callback_data']
                                 }] for button in question['buttons'] + HOME_BUTTON
                             ],
                             'one_time_keyboard': True,
@@ -331,8 +358,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                         'text': 'Выберите',
                         'reply_markup': {
                             'keyboard': [
-                                [{'text': x}] for x in buttons
-                            ] + [HOME_BUTTON],
+                                            [{'text': x}] for x in buttons
+                                        ] + [HOME_BUTTON],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
                         }
