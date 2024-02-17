@@ -403,7 +403,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                         for x in prev_question['buttons']:
                             if text == x['text']:
                                 question = None
-                                genre = x['callback_data']
+                                await cache.lpush(f'art:telegram:words:{customer["id"]}', x['callback_data'])
 
                     lemmas = m.lemmatize(text)
                     risk_words = RISK_WORDS + (prev_question.get('details') or {}).get('risk_words', [])
@@ -438,9 +438,6 @@ class TelegramWebhookHandler(HTTPMethodView):
                 payload, end = {'chat_id': chat_id}, False
 
                 if question:
-                    if genre:
-                        await cache.lpush(f'art:telegram:words:{customer["id"]}', genre)
-
                     if question.get('media'):
                         payload['audio'] = question['media']['url']
                         payload['caption'] = question['text']
