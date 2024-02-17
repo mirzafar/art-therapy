@@ -360,7 +360,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
             return response.json({})
 
-        elif await cache.get(f'art:telegram:questions:rating:{customer["id"]}', 600, '1'):
+        elif await cache.get(f'art:telegram:questions:rating:{customer["id"]}'):
             await self.finalize(customer['id'])
             await tgclient.api_call(
                 method_name='sendMessage',
