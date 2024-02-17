@@ -212,11 +212,11 @@ class TelegramWebhookHandler(HTTPMethodView):
                 method_name='sendPhoto',
                 payload={
                     'chat_id': chat_id,
-                    'caption': 'Что умеет этот бот?\n'
+                    'caption': '*Что умеет этот бот?*\n\n'
                                'Подбор музыки, соответствующей текущему эмоциональному состоянию пользователя '
                                'Генерация мелодии на основе заданного настроения и предпочтений пользователя',
                     'photo': 'https://art.ttshop.kz/static/uploads/d9/54/d95401ed-cfee-4970-b1e4-91b9ec380ab1.png',
-                    "parse_mode": "Markdown",
+                    'parse_mode': 'Markdown',
                     'reply_markup': {
                         'keyboard': MENU_BUTTONS,
                         'one_time_keyboard': True,
@@ -512,11 +512,11 @@ class TelegramWebhookHandler(HTTPMethodView):
                     method_name='sendPhoto',
                     payload={
                         'chat_id': chat_id,
-                        'caption': 'Что умеет этот бот?\n'
+                        'caption': '*Что умеет этот бот?*\n\n'
                                    'Подбор музыки, соответствующей текущему эмоциональному состоянию пользователя '
                                    'Генерация мелодии на основе заданного настроения и предпочтений пользователя',
                         'photo': 'https://art.ttshop.kz/static/uploads/d9/54/d95401ed-cfee-4970-b1e4-91b9ec380ab1.png',
-                        "parse_mode": "Markdown",
+                        'parse_mode': 'Markdown',
                         'reply_markup': {
                             'keyboard': MENU_BUTTONS,
                             'one_time_keyboard': True,
