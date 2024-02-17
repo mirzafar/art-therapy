@@ -223,6 +223,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                 }
             )
 
+            return response.json({})
+
         if not questions:
             questions = await cache.get(f'art:telegram:questions:{customer["id"]}')
             if questions:
