@@ -150,9 +150,9 @@ class TelegramWebhookHandler(HTTPMethodView):
                 method_name='sendMessage',
                 payload={
                     'chat_id': chat_id,
-                    'caption': 'Привет! Меня зовут TulparIfy. '
-                               'Я здесь, чтобы помочь тебе с помощью арт-терапии через музыку.'
-                               'Как тебя зовут?',
+                    'text': 'Привет! Меня зовут TulparIfy. '
+                            'Я здесь, чтобы помочь тебе с помощью арт-терапии через музыку.'
+                            'Как тебя зовут?',
                     'reply_markup': {
                         'keyboard': [HOME_BUTTON],
                         'one_time_keyboard': True,
@@ -214,7 +214,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                 method_name='sendMessage',
                 payload={
                     'chat_id': chat_id,
-                    'caption': 'Выберите',
+                    'text': 'Выберите',
                     'reply_markup': {
                         'keyboard': MENU_BUTTONS,
                         'one_time_keyboard': True,
