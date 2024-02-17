@@ -340,7 +340,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                 }
             )
 
-            await cache.delete(f'art:telegram:audio:name{customer["id"]}')
+            await cache.delete(f'art:telegram:audio:name:{customer["id"]}')
             await cache.delete(f'art:telegram:audio:{customer["id"]}')
 
             return response.json({})
