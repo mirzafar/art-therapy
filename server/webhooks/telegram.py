@@ -291,7 +291,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         elif text and text.startswith('🛠'):
             await self.finalize(customer['id'])
-            questions = await self.generate_questions(customer['id'], 'search')
+            questions = await self.generate_questions(customer['id'], 'ai')
 
         elif text and text.startswith('\u2069'):
             turn_id = IntUtils.to_int(await cache.get(f'art:telegram:audio:{customer["id"]}'))
