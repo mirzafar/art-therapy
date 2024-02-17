@@ -75,6 +75,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
     @classmethod
     async def finalize(cls, customer_id):
+        await cache.delete(f'art:questions:{customer_id}')
         await cache.delete(f'art:question:name:{customer_id}')
         await cache.delete(f'art:telegram:items:{customer_id}')
         await cache.delete(f'art:telegram:prev_question:{customer_id}')
