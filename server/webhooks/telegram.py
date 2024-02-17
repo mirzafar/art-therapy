@@ -78,7 +78,7 @@ class TelegramWebhookHandler(HTTPMethodView):
         await cache.delete(f'art:question:name:{customer_id}')
         await cache.delete(f'art:telegram:prev_question:{customer_id}')
         await cache.delete(f'art:telegram:words:{customer_id}')
-        await cache.delete(f'art:telegram:audio:name{customer_id}')
+        await cache.delete(f'art:telegram:audio:name:{customer_id}')
         await cache.delete(f'art:telegram:audio:{customer_id}')
 
     @classmethod
@@ -294,12 +294,12 @@ class TelegramWebhookHandler(HTTPMethodView):
             questions = await self.generate_questions(customer['id'], 'ai')
 
         elif text and text.startswith('\u2069'):
-            await cache.setex(f'art:telegram:audio:name{customer["id"]}', 600, '1')
+            await cache.setex(f'art:telegram:audio:name:{customer["id"]}', 600, '1')
             await tgclient.api_call(
                 method_name='sendMessage',
                 payload={
                     'chat_id': chat_id,
-                    'text': 'Название',
+                    'text': 'Напишите название трека',
                     'reply_markup': {
                         'keyboard': [HOME_BUTTON],
                         'one_time_keyboard': True,
@@ -309,26 +309,8 @@ class TelegramWebhookHandler(HTTPMethodView):
             )
             return response.json({})
 
-        elif await cache.get(f'art:telegram:audio:name{customer["id"]}'):
+        elif await cache.get(f'art:telegram:audio:name:{customer["id"]}'):
             turn_id = IntUtils.to_int(await cache.get(f'art:telegram:audio:{customer["id"]}'))
-            name = await cache.get(f'art:telegram:audio:name{customer["id"]}')
-            if not name:
-                await tgclient.api_call(
-                    method_name='sendMessage',
-                    payload={
-                        'chat_id': chat_id,
-                        'text': 'Название',
-                        'reply_markup': {
-                            'keyboard': [HOME_BUTTON],
-                            'one_time_keyboard': True,
-                            'resize_keyboard': True
-                        }
-                    }
-                )
-                await cache.setex(f'art:telegram:audio:name{customer["id"]}', 600, '1')
-
-                return response.json({})
-
             if turn_id:
                 t = 'Сохранено'
                 await db.fetchrow(
