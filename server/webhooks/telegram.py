@@ -138,6 +138,8 @@ class TelegramWebhookHandler(HTTPMethodView):
 
                     }
                 )
+            await cls.finalize(customer_id)
+
         else:
             await tgclient.api_call(
                 method_name='sendMessage',
@@ -324,7 +326,6 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         elif text and text.startswith('🔎'):
             await self.generate_turn(customer['id'], chat_id)
-            await self.finalize(customer['id'])
             return response.json({})
 
         if await cache.get(f'art:question:name:{customer["id"]}'):
