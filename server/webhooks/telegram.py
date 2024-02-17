@@ -325,7 +325,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 ORDER BY (
                                     SELECT COUNT(*)
                                     FROM unnest(words) AS element1
-                                    INNER JOIN unnest($1) AS element2 ON element1 = element2
+                                    INNER JOIN unnest($1::text[]) AS element2 ON element1 = element2
                                 ) DESC
                                 LIMIT 1;
                                 ''',
