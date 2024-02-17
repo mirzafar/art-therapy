@@ -482,16 +482,18 @@ class TelegramWebhookHandler(HTTPMethodView):
                     await cache.setex(f'art:telegram:questions:{customer["id"]}', 600, ujson.dumps(questions))
 
                 else:
-                    end = True
                     if await cache.get(f'art:telegram:questions:end:{customer["id"]}'):
                         await self.finalize(customer['id'])
-                        break
+                        payload['text'] = 'Спасибо за вашу обратную связь!'
+                    else:
+                        end = True
 
                 if end:
                     await cache.setex(f'art:telegram:questions:end:{customer["id"]}', 600, '1')
                     if prev_question and prev_question.get('details', {}).get('is_search'):
                         payload.update({
-                            'text': 'Как вам эта музыка? Какую оценку вы бы поставили этой музыке по шкале от 1 до 10',
+                            'text': 'Как вам эта музыка? '
+                                    'Какие элементы музыки вам больше всего понравились/не понравились?',
                             'reply_markup': {
                                 'keyboard': [HOME_BUTTON],
                                 'one_time_keyboard': True,
