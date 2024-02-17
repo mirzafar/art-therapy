@@ -329,7 +329,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 ) DESC
                                 LIMIT 1;
                                 ''',
-                                list(words)
+                                list(set(words))
                             )
                             if tune:
                                 await tgclient.api_call(
