@@ -329,7 +329,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 ) DESC
                                 LIMIT 1;
                                 ''',
-                                await cache.lrange(f'art:telegram:words:{customer["id"]}', 0, -1)
+                                list(words)
                             )
                             if tune:
                                 await tgclient.api_call(
