@@ -78,6 +78,8 @@ class TelegramWebhookHandler(HTTPMethodView):
         await cache.delete(f'art:question:name:{customer_id}')
         await cache.delete(f'art:telegram:prev_question:{customer_id}')
         await cache.delete(f'art:telegram:words:{customer_id}')
+        await cache.delete(f'art:telegram:audio:name{customer_id}')
+        await cache.delete(f'art:telegram:audio:{customer_id}')
 
     @classmethod
     async def generate_turn(cls, customer_id, chat_id):
@@ -299,9 +301,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     'chat_id': chat_id,
                     'text': 'Название',
                     'reply_markup': {
-                        'keyboard': [
-                                        [{'text': '\u2069 Сохранить'}]
-                                    ] + [HOME_BUTTON],
+                        'keyboard': [HOME_BUTTON],
                         'one_time_keyboard': True,
                         'resize_keyboard': True
                     }
@@ -319,9 +319,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                         'chat_id': chat_id,
                         'text': 'Название',
                         'reply_markup': {
-                            'keyboard': [
-                                            [{'text': '\u2069 Сохранить'}]
-                                        ] + [HOME_BUTTON],
+                            'keyboard': [HOME_BUTTON],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
                         }
@@ -359,6 +357,9 @@ class TelegramWebhookHandler(HTTPMethodView):
                     }
                 }
             )
+
+            await cache.delete(f'art:telegram:audio:name{customer["id"]}')
+            await cache.delete(f'art:telegram:audio:{customer["id"]}')
 
             return response.json({})
 
