@@ -82,6 +82,7 @@ class TelegramWebhookHandler(HTTPMethodView):
     @classmethod
     async def generate_turn(cls, customer_id, chat_id):
         words = await cache.lrange(f'art:telegram:words:{customer_id}', 0, -1)
+        print('->>>>>>')
         if words:
             tune = await db.fetchrow(
                 '''
@@ -101,7 +102,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                 method_name='sendMessage',
                 payload={
                     'chat_id': chat_id,
-                    'title': '⏱️ идет генерация трека ...'
+                    'text': '⏱️ идет генерация трека ...'
                 }
             )
 
@@ -129,7 +130,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     method_name='sendMessage',
                     payload={
                         'chat_id': chat_id,
-                        'title': 'Ничего не найдено',
+                        'text': 'Ничего не найдено',
                         'reply_markup': {
                             'keyboard': MENU_BUTTONS,
                             'one_time_keyboard': True,
@@ -145,7 +146,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                 method_name='sendMessage',
                 payload={
                     'chat_id': chat_id,
-                    'title': 'Выберите',
+                    'text': 'Выберите',
                     'reply_markup': {
                         'keyboard': [
                                         [{'text': '🛠️ Выбор параметров'}]
