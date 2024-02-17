@@ -1,3 +1,4 @@
+import asyncio
 import random
 
 import ujson
@@ -10,6 +11,7 @@ from core.cache import cache
 from core.db import db
 from settings import settings
 from utils.dicts import DictUtils
+from utils.ints import IntUtils
 from utils.lists import ListUtils
 from utils.strs import StrUtils
 
@@ -29,9 +31,6 @@ MENU_BUTTONS = [
     }],
     [{
         'text': '📃️ Справка',
-    }],
-    [{
-        'text': '🎧 Музыкальная библиотека',
     }],
     [{
         'text': '🎼 Генерация музыки',
@@ -79,6 +78,84 @@ class TelegramWebhookHandler(HTTPMethodView):
         await cache.delete(f'art:question:name:{customer_id}')
         await cache.delete(f'art:telegram:prev_question:{customer_id}')
         await cache.delete(f'art:telegram:words:{customer_id}')
+
+    @classmethod
+    async def generate_turn(cls, customer_id, chat_id):
+        words = await cache.lrange(f'art:telegram:words:{customer_id}', 0, -1)
+        if words:
+            tune = await db.fetchrow(
+                '''
+                SELECT *
+                FROM public.tunes
+                ORDER BY (
+                    SELECT COUNT(*)
+                    FROM unnest(words) AS element1
+                    INNER JOIN unnest($1::text[]) AS element2 ON element1 = element2
+                ) DESC
+                LIMIT 1;
+                ''',
+                list(set(words))
+            )
+
+            await tgclient.api_call(
+                method_name='sendMessage',
+                payload={
+                    'chat_id': chat_id,
+                    'title': '⏱️ идет генерация трека ...'
+                }
+            )
+
+            await asyncio.sleep(5)
+
+            if tune:
+                await cache.setex(f'art:telegram:audio:{customer_id}', 600, tune['id'])
+                await tgclient.api_call(
+                    method_name='sendAudio',
+                    payload={
+                        'chat_id': chat_id,
+                        'title': tune['title'],
+                        'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
+                        'reply_markup': {
+                            'keyboard': [
+                                            [{'text': '\u2069Сохранить трек'}]
+                                        ] + [HOME_BUTTON],
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
+                    }
+                )
+            else:
+                await tgclient.api_call(
+                    method_name='sendMessage',
+                    payload={
+                        'chat_id': chat_id,
+                        'title': 'Ничего не найдено',
+                        'reply_markup': {
+                            'keyboard': MENU_BUTTONS,
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
+
+                    }
+                )
+        else:
+            await tgclient.api_call(
+                method_name='sendMessage',
+                payload={
+                    'chat_id': chat_id,
+                    'title': 'Выберите',
+                    'reply_markup': {
+                        'keyboard': [
+                                        [{'text': '🛠️ Выбор параметров'}]
+                                    ] + [HOME_BUTTON],
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
+
+                }
+            )
+
+        return
 
     async def get(self, request):
         return response.json({})
@@ -135,9 +212,10 @@ class TelegramWebhookHandler(HTTPMethodView):
                 method_name='sendPhoto',
                 payload={
                     'chat_id': chat_id,
-                    'caption': '*Подбор музыки, соответствующей текущему эмоциональному состоянию пользователя '
-                               'Генерация мелодии на основе заданного настроения и предпочтений пользователя*',
-                    'photo': 'https://art.ttshop.kz/static/uploads/57/46/5746d2c9-ed64-41f9-9039-c771be0d5fb5.png',
+                    'caption': 'Что умеет этот бот?\n'
+                               'Подбор музыки, соответствующей текущему эмоциональному состоянию пользователя '
+                               'Генерация мелодии на основе заданного настроения и предпочтений пользователя',
+                    'photo': 'https://art.ttshop.kz/static/uploads/d9/54/d95401ed-cfee-4970-b1e4-91b9ec380ab1.png',
                     "parse_mode": "Markdown",
                     'reply_markup': {
                         'keyboard': MENU_BUTTONS,
@@ -190,13 +268,62 @@ class TelegramWebhookHandler(HTTPMethodView):
 
             return response.json({})
 
-        if text and text.startswith('🎼'):
-            await self.finalize(customer['id'])
-            questions = await self.generate_questions(customer['id'], 'ai')
+        elif text and text.startswith('🎼'):
+            await tgclient.api_call(
+                payload={
+                    'chat_id': chat_id,
+                    'text': 'Выберите',
+                    'reply_markup': {
+                        'keyboard': [
+                                        [{'text': '🛠️ Выбор параметров'}],
+                                        [{'text': '🔎 Генерация трека'}]
+                                    ] + [HOME_BUTTON],
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
+                }
+            )
 
-        if text and text.startswith('🔍'):
+        elif text and text.startswith('🛠'):
             await self.finalize(customer['id'])
             questions = await self.generate_questions(customer['id'], 'search')
+
+        elif text and text.startswith('\u2069'):
+            turn_id = IntUtils.to_int(await cache.get(f'art:telegram:audio:{customer["id"]}'))
+            if turn_id:
+                t = 'Сохранено'
+                await db.fetchrow(
+                    '''
+                    INSERT INTO public.playlist(turn_id, type, customer_id)
+                    VALUES ($1, $2, $3)
+                    RETURNING *
+                    ''',
+                    turn_id,
+                    'save',
+                    customer['id']
+                )
+            else:
+                t = 'Ничего не найден'
+
+            await tgclient.api_call(
+                method_name='sendMessage',
+                payload={
+                    'chat_id': chat_id,
+                    'text': t,
+                    'reply_markup': {
+                        'keyboard': [HOME_BUTTON],
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
+                }
+            )
+
+            return response.json({})
+
+        elif text and text.startswith('🔎'):
+            await self.generate_turn(customer['id'], chat_id)
+            await self.finalize(customer['id'])
+            return response.json({})
 
         if await cache.get(f'art:question:name:{customer["id"]}'):
             await cache.delete(f'art:question:name:{customer["id"]}')
@@ -266,7 +393,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                             'дополнением к другим методам лечения депрессии, таким как медикаментозная '
                                             'терапия и психотерапия',
                                     'reply_markup': {
-                                        'keyboard': MENU_BUTTONS,
+                                        'keyboard': [HOME_BUTTON],
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True
                                     }
@@ -293,30 +420,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                         payload['caption'] = question['text']
                         method = 'sendAudio'
 
-                    elif question.get('details') and question['details'].get('action') == 'get_tunes':
-                        tunes = await db.fetch(
-                            '''
-                            SELECT *
-                            FROM public.tunes
-                            WHERE genre = $1
-                            ''',
-                            genre
-                        )
-                        if tunes:
-                            for tune in tunes:
-                                await tgclient.api_call(
-                                    method_name='sendAudio',
-                                    payload={
-                                        'chat_id': chat_id,
-                                        'title': tune['title'],
-                                        'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
-                                    }
-                                )
-                        payload['text'] = question['text']
                     elif question.get('details') and question['details'].get('action') == 'best_match':
                         words = await cache.lrange(f'art:telegram:words:{customer["id"]}', 0, -1)
-                        print('words', words)
-                        print(type(words), 'type')
                         if words:
                             tune = await db.fetchrow(
                                 '''
