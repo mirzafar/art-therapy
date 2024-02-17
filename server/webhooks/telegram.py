@@ -504,6 +504,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     SELECT array_agg(title)
                     FROM public.kbase
                     WHERE type = 'reference'
+                    ORDER BY id
                     '''
                 )
                 await tgclient.api_call(
