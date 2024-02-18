@@ -20,6 +20,11 @@ sanic-openapi = "*"
 websockets = "==10.0"
 pymystem3 = "*"
 
+transformers = "*"
+scipy = "*"
+torch = "*"
+torchvision = "*"
+
 [dev-packages]
 
 [requires]
