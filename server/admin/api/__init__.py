@@ -1,15 +1,12 @@
 from sanic import Blueprint
 
 from admin.api.districts import districts_bp
-from admin.api.main import MainView
 from admin.api.regions import regions_bp
 from admin.api.tracks import tracks_bp
 from admin.api.traffics import traffics_bp
 from admin.api.users import users_bp
 
 main_bp = Blueprint('main', url_prefix='/')
-
-main_bp.add_route(MainView.as_view(), '/', name='main')
 
 api_group = Blueprint.group(
     main_bp,

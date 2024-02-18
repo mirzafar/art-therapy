@@ -5,6 +5,7 @@ from sanic_openapi import openapi2_blueprint
 
 from admin import LoginAdminView, LogoutAdminView
 from admin.api import api_group
+from admin.api.main import OrdersView
 from api.core.upload import UploadView
 from core.auth import auth
 from core.cache import cache
@@ -50,6 +51,7 @@ app.blueprint([
 app.add_route(UploadView.as_view(), '/api/upload/')
 app.add_route(LoginAdminView.as_view(), '/api/login/')
 app.add_route(LogoutAdminView.as_view(), '/api/logout/')
+app.add_route(OrdersView.as_view(), '/orders/')
 
 app.static('/static', os.path.join(settings.get('file_path'), 'static'))
 
