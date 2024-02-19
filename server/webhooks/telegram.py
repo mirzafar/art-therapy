@@ -141,16 +141,13 @@ class TelegramWebhookHandler(HTTPMethodView):
             FROM public.playlist
             WHERE id = $1
             ''',
-            _id
+            int(_id)
         )
         print(await tgclient.api_call(
-            method_name='sendMessage',
+            method_name='sendAudio',
             payload={
-                'method_name': 'sendAudio',
-                'payload': {
-                    'chat_id': chat_id,
-                    'audio': playlist['url'],
-                }
+                'chat_id': chat_id,
+                'audio': playlist['url'],
             }
         ))
 
