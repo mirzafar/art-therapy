@@ -1,7 +1,14 @@
-a = {
- "{\"text\": \"Классическая музыка: Бах, Моцарт, Бетховен\", \"callback_data\": \"classic\"}",
- "{\"text\": \"Ambient music: Brian Eno, Harold Budd, Steve Roach\", \"callback_data\": \"ambient\"}",
- "{\"text\": \"Звуки природы (Nature sounds)\", \"callback_data\": \"nature\"}",
- "{\"text\": \"Дождь (Rain)\", \"callback_data\": \"rain\"}",
- "{\"text\": \"Звуки леса (forest sounds)\", \"callback_data\": \"forest\"}"
-}
+from pymystem3 import Mystem
+
+from utils.lists import ListUtils
+
+a = ' гнев, вина, одиноко, страдаю, боюсь, ненавижу, бесполезео, страх, печаль, безнадежность, нет смысла, нет цели, мучаюсь, недостоин, виноват, тяжело, невыносимо'
+v = a.split(',')
+
+m = Mystem()
+e = []
+for i in v:
+    q = ListUtils.to_list_of_strs(m.lemmatize(i))
+    e.append(q)
+
+print(e)
