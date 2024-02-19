@@ -463,6 +463,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     question = questions.pop(0) if questions else {}
 
                 payload, end = {'chat_id': chat_id}, False
+                wait_payloads = []
 
                 if question:
                     if question.get('media'):
@@ -482,14 +483,22 @@ class TelegramWebhookHandler(HTTPMethodView):
                         )
 
                         if tune:
-                            await tgclient.api_call(
-                                method_name='sendAudio',
-                                payload={
+                            wait_payloads.append({
+                                'method_name': 'sendAudio',
+                                'payload': {
                                     'chat_id': chat_id,
                                     'title': tune['title'],
                                     'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
                                 }
-                            )
+                            })
+                            wait_payloads.append({
+                                'method_name': 'sendMessage',
+                                'payload': {
+                                    'chat_id': chat_id,
+                                    'text': 'Как вам эта музыка?',
+                                }
+                            })
+
                         payload['text'] = question['text']
 
                     else:
@@ -547,6 +556,10 @@ class TelegramWebhookHandler(HTTPMethodView):
                     })
 
                 await tgclient.api_call(method_name=method, payload=payload)
+                if wait_payloads:
+                    for x in wait_payloads:
+                        await tgclient.api_call(method_name=x['method_name'], payload=x['payload'])
+                        await asyncio.sleep(1)
                 break
 
         if success is False:
