@@ -91,20 +91,6 @@ class TelegramWebhookHandler(HTTPMethodView):
     async def generate_turn(cls, customer_id, chat_id):
         words = await cache.lrange(f'art:telegram:words:{customer_id}', 0, -1)
         if words:
-            tune = await db.fetchrow(
-                '''
-                SELECT *
-                FROM public.tunes
-                ORDER BY (
-                    SELECT COUNT(*)
-                    FROM unnest(words) AS element1
-                    INNER JOIN unnest($1::text[]) AS element2 ON element1 = element2
-                ) DESC
-                LIMIT 1;
-                ''',
-                list(set(words))
-            )
-
             await tgclient.api_call(
                 method_name='sendMessage',
                 payload={
@@ -113,39 +99,17 @@ class TelegramWebhookHandler(HTTPMethodView):
                 }
             )
 
+            await db.fetchrow(
+                '''
+                INSERT INTO public.playlist(customer_id, words)
+                VALUES ($1, $2)
+                RETURNING *
+                ''',
+                customer_id,
+                list(set(words))
+            )
+
             await asyncio.sleep(5)
-
-            if tune:
-                await cache.setex(f'art:telegram:audio:{customer_id}', 600, tune['id'])
-                await tgclient.api_call(
-                    method_name='sendAudio',
-                    payload={
-                        'chat_id': chat_id,
-                        'title': tune['title'],
-                        'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
-                        'reply_markup': {
-                            'keyboard': [
-                                            [{'text': '\u2069Сохранить трек'}]
-                                        ] + [HOME_BUTTON],
-                            'one_time_keyboard': True,
-                            'resize_keyboard': True
-                        }
-                    }
-                )
-            else:
-                await tgclient.api_call(
-                    method_name='sendMessage',
-                    payload={
-                        'chat_id': chat_id,
-                        'text': 'Ничего не найдено',
-                        'reply_markup': {
-                            'keyboard': MENU_BUTTONS,
-                            'one_time_keyboard': True,
-                            'resize_keyboard': True
-                        }
-
-                    }
-                )
 
         else:
             await tgclient.api_call(
@@ -320,19 +284,16 @@ class TelegramWebhookHandler(HTTPMethodView):
             return response.json({})
 
         elif await cache.get(f'art:telegram:audio:name:{customer["id"]}'):
-            turn_id = IntUtils.to_int(await cache.get(f'art:telegram:audio:{customer["id"]}'))
-            if turn_id:
+            playlist_id = IntUtils.to_int(await cache.get(f'art:telegram:audio:{customer["id"]}'))
+            if playlist_id:
                 t = 'Сохранено'
                 await db.fetchrow(
                     '''
-                    INSERT INTO public.playlist(turn_id, type, customer_id, title)
-                    VALUES ($1, $2, $3, $4)
-                    RETURNING *
+                    UPDATE public.playlist
+                    SET status = 3
+                    WHERE id = $1
                     ''',
-                    turn_id,
-                    'save',
-                    customer['id'],
-                    text
+                    playlist_id
                 )
             else:
                 t = 'Ничего не найден'
