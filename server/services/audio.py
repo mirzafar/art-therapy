@@ -47,7 +47,7 @@ async def generate(order, client):
         input={
             'top_k': 250,
             'top_p': 0,
-            'prompt': "piano classic",
+            'prompt': ', '.join(order['words']),
             'duration': 10,
             'temperature': 1,
             'continuation': False,
