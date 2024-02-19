@@ -163,7 +163,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             '''
             SELECT *
             FROM public.playlist
-            WHERE customer_id = $1
+            WHERE customer_id = $1 AND status = 3 AND url IS NOT NULL
             ORDER BY id desc
             LIMIT $2 OFFSET $3
             ''',
@@ -175,7 +175,7 @@ class TelegramWebhookHandler(HTTPMethodView):
         for x in playlists:
             buttons.append([
                 {
-                    'text': f'🎵 {x["title"]}' or '🎵 Без название',
+                    'text': f'🎵 {x["title"] or "Без название"}',
                     'callback_data': f'playlist:id:{x["id"]}'
                 }
             ])
