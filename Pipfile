@@ -19,6 +19,7 @@ asyncpg = "*"
 sanic-openapi = "*"
 websockets = "==10.0"
 pymystem3 = "*"
+replicate = "*"
 
 [dev-packages]
 

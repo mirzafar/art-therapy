@@ -51,7 +51,6 @@ app.blueprint([
 app.add_route(UploadView.as_view(), '/api/upload/')
 app.add_route(LoginAdminView.as_view(), '/api/login/')
 app.add_route(LogoutAdminView.as_view(), '/api/logout/')
-app.add_route(OrdersView.as_view(), '/orders/')
 
 app.static('/static', os.path.join(settings.get('file_path'), 'static'))
 
