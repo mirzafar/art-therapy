@@ -186,16 +186,13 @@ class TelegramWebhookHandler(HTTPMethodView):
             buttons.append(a)
 
         if buttons:
-            print('but', buttons)
             print(await tgclient.api_call(
                 method_name='sendMessage',
                 payload={
                     'chat_id': chat_id,
-                    'text': 'Привет! Меня зовут TulparIfy. '
-                            'Я здесь, чтобы помочь тебе с помощью арт-терапии через музыку.'
-                            'Как тебя зовут?',
+                    'text': 'Выберите',
                     'reply_markup': {
-                        'inline_keyboard': [buttons],
+                        'inline_keyboard': buttons,
                         'one_time_keyboard': True,
                         'resize_keyboard': True
                     }
