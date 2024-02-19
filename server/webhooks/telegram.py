@@ -132,6 +132,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
     @classmethod
     async def playlists(cls, customer_id, chat_id, page=1):
+        print('___>')
         limit = 5
         offset = (page - 1) * limit
 
@@ -340,6 +341,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         elif text and text.startswith('📁'):
             await self.playlists(customer['id'], chat_id)
+            return response.json({})
 
         elif text and text.startswith('\u2069'):
             await cache.setex(f'art:telegram:audio:name:{customer["id"]}', 600, '1')
