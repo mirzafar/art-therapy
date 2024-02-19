@@ -559,7 +559,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                 if wait_payloads:
                     for x in wait_payloads:
                         await tgclient.api_call(method_name=x['method_name'], payload=x['payload'])
-                        await asyncio.sleep(1)
+                        await asyncio.sleep(2)
                 break
 
         if success is False:
