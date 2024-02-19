@@ -139,7 +139,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         playlists = await db.fetch(
             '''
-            SELECT id
+            SELECT *
             FROM public.playlist
             WHERE customer_id = $1
             ORDER BY id desc
