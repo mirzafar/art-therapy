@@ -159,6 +159,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                 }
             ])
 
+        print('buttons', buttons)
+        print('playlists', playlists)
         total = await db.fetchval(
             '''
             SELECT count(*)
