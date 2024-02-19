@@ -224,7 +224,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     'caption': '*Что умеет этот бот?*\n\n'
                                'Подбор музыки, соответствующей текущему эмоциональному состоянию пользователя '
                                'Генерация мелодии на основе заданного настроения и предпочтений пользователя',
-                    'photo': 'https://art.ttshop.kz/static/uploads/d9/54/d95401ed-cfee-4970-b1e4-91b9ec380ab1.png',
+                    'photo': 'https://art.ttshop.kz/static/uploads/78/cf/78cf9c70-7622-4800-b97d-f6b52de3a176.jpeg',
                     'parse_mode': 'Markdown',
                     'reply_markup': {
                         'keyboard': MENU_BUTTONS,
@@ -585,7 +585,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                         'caption': '*Что умеет этот бот?*\n\n'
                                    'Подбор музыки, соответствующей текущему эмоциональному состоянию пользователя '
                                    'Генерация мелодии на основе заданного настроения и предпочтений пользователя',
-                        'photo': 'https://art.ttshop.kz/static/uploads/d9/54/d95401ed-cfee-4970-b1e4-91b9ec380ab1.png',
+                        'photo': 'https://art.ttshop.kz/static/uploads/78/cf/78cf9c70-7622-4800-b97d-f6b52de3a176.jpeg',
                         'parse_mode': 'Markdown',
                         'reply_markup': {
                             'keyboard': MENU_BUTTONS,
