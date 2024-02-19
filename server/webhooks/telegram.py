@@ -132,11 +132,11 @@ class TelegramWebhookHandler(HTTPMethodView):
 
     @classmethod
     async def playlists(cls, customer_id, chat_id, page=1):
-        print('___>')
         limit = 5
         offset = (page - 1) * limit
 
         buttons = []
+        print(f'playlists: page={page}, limit={limit}, offset={offset}, customer={customer_id}')
 
         playlists = await db.fetch(
             '''
