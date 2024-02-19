@@ -130,6 +130,77 @@ class TelegramWebhookHandler(HTTPMethodView):
 
         return
 
+    @classmethod
+    async def playlists(cls, customer_id, chat_id, page=1):
+        limit = 5
+        offset = (page - 1) * limit
+
+        buttons = []
+
+        playlists = await db.fetch(
+            '''
+            SELECT id
+            FROM public.playlist
+            WHERE customer_id = $1
+            ORDER BY id desc
+            LIMIT $2 OFFSET $3
+            ''',
+            customer_id,
+            limit,
+            offset
+        ) or []
+
+        for x in playlists:
+            buttons.append([
+                {
+                    'text': f'🎵 {x["title"]}' or '🎵 Без название',
+                    'callback_data': f'playlist:id:{x["id"]}'
+                }
+            ])
+
+        total = await db.fetchval(
+            '''
+            SELECT count(*)
+            FROM public.playlist
+            WHERE customer_id = $1
+            ''',
+            customer_id
+        ) or 0
+
+        next_page = total > (limit * page)
+        prev_page = page > 1
+
+        if next_page or prev_page:
+            a = []
+            if prev_page:
+                a.append({
+                    'text': f'⏮️',
+                    'callback_data': f'playlist:page:{page - 1}'
+                })
+            if next_page:
+                a.append({
+                    'text': f'⏭️',
+                    'callback_data': f'playlist:page:{page + 1}'
+                })
+
+            buttons.append(a)
+
+        if buttons:
+            await tgclient.api_call(
+                method_name='sendMessage',
+                payload={
+                    'chat_id': chat_id,
+                    'text': 'Привет! Меня зовут TulparIfy. '
+                            'Я здесь, чтобы помочь тебе с помощью арт-терапии через музыку.'
+                            'Как тебя зовут?',
+                    'reply_markup': {
+                        'inline_keyboard': [buttons],
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
+                }
+            )
+
     async def get(self, request):
         return response.json({})
 
@@ -266,6 +337,9 @@ class TelegramWebhookHandler(HTTPMethodView):
         elif text and text.startswith('💬'):
             await self.finalize(customer['id'])
             questions = await self.generate_questions(customer['id'], 'search')
+
+        elif text and text.startswith('📁'):
+            await self.playlists(customer['id'], chat_id)
 
         elif text and text.startswith('\u2069'):
             await cache.setex(f'art:telegram:audio:name:{customer["id"]}', 600, '1')
