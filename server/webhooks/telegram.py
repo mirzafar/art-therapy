@@ -290,10 +290,11 @@ class TelegramWebhookHandler(HTTPMethodView):
                 await db.fetchrow(
                     '''
                     UPDATE public.playlist
-                    SET status = 3
+                    SET status = 3, title = $2
                     WHERE id = $1
                     ''',
-                    playlist_id
+                    playlist_id,
+                    text
                 )
             else:
                 t = 'Ничего не найден'
