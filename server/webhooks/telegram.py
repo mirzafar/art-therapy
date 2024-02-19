@@ -136,7 +136,6 @@ class TelegramWebhookHandler(HTTPMethodView):
         offset = (page - 1) * limit
 
         buttons = []
-        print(f'playlists: page={page}, limit={limit}, offset={offset}, customer={customer_id}')
 
         playlists = await db.fetch(
             '''
@@ -159,8 +158,6 @@ class TelegramWebhookHandler(HTTPMethodView):
                 }
             ])
 
-        print('buttons', buttons)
-        print('playlists', playlists)
         total = await db.fetchval(
             '''
             SELECT count(*)
@@ -189,7 +186,8 @@ class TelegramWebhookHandler(HTTPMethodView):
             buttons.append(a)
 
         if buttons:
-            await tgclient.api_call(
+            print('but', buttons)
+            print(await tgclient.api_call(
                 method_name='sendMessage',
                 payload={
                     'chat_id': chat_id,
@@ -202,7 +200,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                         'resize_keyboard': True
                     }
                 }
-            )
+            ))
 
     async def get(self, request):
         return response.json({})
