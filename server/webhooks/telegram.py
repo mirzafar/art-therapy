@@ -153,6 +153,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
     @classmethod
     async def playlists(cls, customer_id, chat_id, page=1):
+        page = int(page)
         limit = 5
         offset = (page - 1) * limit
 
