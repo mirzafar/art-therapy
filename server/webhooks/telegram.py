@@ -131,6 +131,27 @@ class TelegramWebhookHandler(HTTPMethodView):
         return
 
     @classmethod
+    async def get_playlist(cls, chat_id, _id):
+        playlist = await db.fetchrow(
+            '''
+            SELECT *
+            FROM public.playlist
+            WHERE id = $1
+            ''',
+            _id
+        )
+        print(await tgclient.api_call(
+            method_name='sendMessage',
+            payload={
+                'method_name': 'sendAudio',
+                'payload': {
+                    'chat_id': chat_id,
+                    'audio': playlist['url'],
+                }
+            }
+        ))
+
+    @classmethod
     async def playlists(cls, customer_id, chat_id, page=1):
         limit = 5
         offset = (page - 1) * limit
@@ -288,11 +309,21 @@ class TelegramWebhookHandler(HTTPMethodView):
         text = None
         success = False
         questions = None
+
         if message and message.get('text'):
             text = message['text']
 
         if callback_query and callback_query.get('data'):
             text = callback_query['data']
+            if text:
+                if text.startswith('playlist'):
+                    _, r, _id = text.split(':')
+                    if r == 'id':
+                        await self.get_playlist(chat_id, _id)
+                        return response.json({})
+                    elif r == 'page':
+                        await self.playlists(customer['id'], chat_id, _id)
+                        return response.json({})
 
         if text and text.startswith('🏠'):
             await self.finalize(customer['id'])
