@@ -187,7 +187,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             '''
             SELECT count(*)
             FROM public.playlist
-            WHERE customer_id = $1
+            WHERE customer_id = $1 AND status = 3 AND url IS NOT NULL
             ''',
             customer_id
         ) or 0
