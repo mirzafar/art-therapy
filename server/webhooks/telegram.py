@@ -24,6 +24,11 @@ RISK_WORDS = [
     ['нет', 'смысл'], ['нет', 'цель'], ['мучиться'], ['недостойный'], ['виноватый'], ['тяжело'], ['невыносимый']
 ]
 
+LOCALE_TUNES = [{'text': 'Классика', 'callback_data': 'classic'}, {'text': 'Джаз', 'callback_data': 'djazz'},
+                {'text': 'Электронная музыка', 'callback_data': 'electronic'},
+                {'text': 'Музыка для медитации', 'callback_data': 'meditation'},
+                {'text': 'Звуки природы', 'callback_data': 'nature'}]
+
 m = Mystem()
 
 HOME_BUTTON = [{
@@ -50,6 +55,78 @@ MENU_BUTTONS = [
 
 
 class TelegramWebhookHandler(HTTPMethodView):
+
+    @classmethod
+    async def send_rating(cls, customer_id, chat_id, text):
+        success, genre = False, None
+        for x in LOCALE_TUNES:
+            if x.get('text') == text:
+                success = True
+                genre = x['callback_data']
+
+        if not success:
+            await cls.send_locale_tune(customer_id, chat_id)
+            return
+
+        await cache.setex(f'art:telegram:questions:rating:{customer_id}', 600, '1')
+        wait_payloads = [{
+            'method_name': 'sendMessage',
+            'payload': {
+                'chat_id': chat_id,
+                'text': 'Вот несколько вариантов музыки, которая может тебе помочь расслабиться:',
+            }
+        }]
+
+        tune = await db.fetchrow(
+            '''
+            SELECT *
+            FROM public.tunes
+            WHERE genre = $1
+            ORDER BY random()
+            ''',
+            genre
+        )
+
+        if tune:
+            wait_payloads.append({
+                'method_name': 'sendAudio',
+                'payload': {
+                    'chat_id': chat_id,
+                    'title': tune['title'],
+                    'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
+                }
+            })
+            wait_payloads.append({
+                'method_name': 'sendMessage',
+                'payload': {
+                    'chat_id': chat_id,
+                    'text': 'Как вам эта музыка?',
+                }
+            })
+
+        for x in wait_payloads:
+            await tgclient.api_call(method_name=x['method_name'], payload=x['payload'])
+
+        return cls.finalize(customer_id)
+
+    @classmethod
+    async def send_locale_tune(cls, customer_id, chat_id):
+        await tgclient.api_call(
+            payload={
+                'chat_id': chat_id,
+                'text': 'Вот несколько вариантов музыки, которая может тебе помочь расслабиться:',
+                'reply_markup': {
+                    'keyboard': [
+                                    [x] for x in LOCALE_TUNES
+                                ] + [HOME_BUTTON],
+                    'one_time_keyboard': True,
+                    'resize_keyboard': True
+                }
+            }
+        )
+
+        return await cache.setex(f'art:telegram:locale_tune:{customer_id}', 600, 1)
+
     @classmethod
     async def generate_questions(cls, customer_id, _type):  # Генерация вопросов для общения и создания треков
         items = await db.fetch(
@@ -91,7 +168,9 @@ class TelegramWebhookHandler(HTTPMethodView):
             f'art:telegram:prev_question:{customer_id}',
             f'art:telegram:words:{customer_id}',
             f'art:telegram:audio:name:{customer_id}',
-            f'art:telegram:questions:rating:{customer_id}'
+            f'art:telegram:questions:rating:{customer_id}',
+            f'art:telegram:risk:{customer_id}',
+            f'art:telegram:locale_tune:{customer_id}'
         ]
         await cache.delete(*keys)
 
@@ -433,20 +512,46 @@ class TelegramWebhookHandler(HTTPMethodView):
             return response.json({})
 
         elif await cache.get(f'art:telegram:questions:rating:{customer["id"]}'):
-            await self.finalize(customer['id'])
-            await tgclient.api_call(
-                method_name='sendMessage',
-                payload={
-                    'chat_id': chat_id,
-                    'text': 'Спасибо за вашу обратную связь!',
-                    'reply_markup': {
-                        'keyboard': MENU_BUTTONS,
-                        'one_time_keyboard': True,
-                        'resize_keyboard': True
-                    }
-                }
-            )
+            lemmas = m.lemmatize(text)
+            success = True
+            for x in RISK_WORDS:
+                if len(list(set(x) & set(lemmas))) == len(x):
+                    if await cache.get(f'art:telegram:risk:{customer["id"]}'):
+                        await tgclient.api_call(
+                            payload={
+                                'chat_id': chat_id,
+                                'text': 'Рекомендую обратиться к профессиональному психологу или психотерапевту,'
+                                        ' если это беспокоит длительное время. Арт-терапия может быть эффективным '
+                                        'дополнением к другим методам лечения депрессии, таким как медикаментозная '
+                                        'терапия и психотерапия',
+                                'reply_markup': {
+                                    'keyboard': [HOME_BUTTON],
+                                    'one_time_keyboard': True,
+                                    'resize_keyboard': True
+                                }
+                            }
+                        )
+                        success = False
+                    break
 
+            if success:
+                await tgclient.api_call(
+                    method_name='sendMessage',
+                    payload={
+                        'chat_id': chat_id,
+                        'text': 'Спасибо за вашу обратную связь!',
+                        'reply_markup': {
+                            'keyboard': MENU_BUTTONS,
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True
+                        }
+                    }
+                )
+            await self.finalize(customer['id'])
+            return response.json({})
+
+        elif await cache.get(f'art:telegram:locale_tune:{customer["id"]}'):
+            await self.send_rating(customer['id'], chat_id, text)
             return response.json({})
 
         if await cache.get(f'art:question:name:{customer["id"]}'):
@@ -507,76 +612,20 @@ class TelegramWebhookHandler(HTTPMethodView):
                     lemmas = m.lemmatize(text)  # поиск основы слов
                     risk_words = RISK_WORDS + (prev_question.get('details') or {}).get('risk_words', [])
 
-                    flag = True
                     for x in risk_words:
                         if len(list(set(x) & set(lemmas))) == len(x):
-                            await tgclient.api_call(
-                                payload={
-                                    'chat_id': chat_id,
-                                    'text': 'Рекомендую обратиться к профессиональному психологу или психотерапевту,'
-                                            ' если это беспокоит длительное время. Арт-терапия может быть эффективным '
-                                            'дополнением к другим методам лечения депрессии, таким как медикаментозная '
-                                            'терапия и психотерапия',
-                                    'reply_markup': {
-                                        'keyboard': [HOME_BUTTON],
-                                        'one_time_keyboard': True,
-                                        'resize_keyboard': True
-                                    }
-                                }
-                            )
+                            await cache.setex(f'art:telegram:risk:{customer["id"]}', 600, 1)
+                            await self.send_locale_tune(customer['id'], chat_id)
 
-                            await self.finalize(customer['id'])
-                            flag = False
-                            break
-
-                    if flag is False:
-                        break
+                            return response.json({})
 
                 if not question:
                     question = questions.pop(0) if questions else {}
 
-                payload, end = {'chat_id': chat_id}, False
+                payload, end = {'chat_id': chat_id, 'text': question['text']}, False
                 wait_payloads = []
 
                 if question:
-                    if question.get('media'):
-                        payload['audio'] = question['media']['url']
-                        payload['caption'] = question['text']
-                        method = 'sendAudio'
-
-                    elif question.get('details') and question['details'].get('action') == 'get_tunes':
-                        tune = await db.fetchrow(
-                            '''
-                            SELECT *
-                            FROM public.tunes
-                            WHERE genre = $1
-                            ORDER BY random()
-                            ''',
-                            genre
-                        )
-
-                        if tune:
-                            wait_payloads.append({
-                                'method_name': 'sendAudio',
-                                'payload': {
-                                    'chat_id': chat_id,
-                                    'title': tune['title'],
-                                    'audio': settings['base_url'] + '/static/uploads/' + tune['path'],
-                                }
-                            })
-                            wait_payloads.append({
-                                'method_name': 'sendMessage',
-                                'payload': {
-                                    'chat_id': chat_id,
-                                    'text': 'Как вам эта музыка?',
-                                }
-                            })
-
-                        payload['text'] = question['text']
-
-                    else:
-                        payload['text'] = question['text']
-
                     await cache.setex(f'art:telegram:prev_question:{customer["id"]}', 600, ujson.dumps(question))
                     await cache.setex(f'art:telegram:questions:{customer["id"]}', 600, ujson.dumps(questions))
 
@@ -584,16 +633,9 @@ class TelegramWebhookHandler(HTTPMethodView):
                     end = True
 
                 if end:
-                    if prev_question and prev_question.get('details', {}).get('is_search'):
-                        await cache.setex(f'art:telegram:questions:rating:{customer["id"]}', 600, '1')
-                        payload.update({
-                            'text': 'Какие элементы музыки вам больше всего понравились/не понравились?',
-                            'reply_markup': {
-                                'keyboard': [HOME_BUTTON],
-                                'one_time_keyboard': True,
-                                'resize_keyboard': True
-                            }
-                        })
+                    if prev_question and prev_question.get('is_last'):
+                        await self.send_locale_tune(customer['id'], chat_id)
+                        return response.json({})
                     else:
                         payload.update({
                             'text': 'Выберите',
@@ -605,6 +647,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 'resize_keyboard': True
                             }
                         })
+
                 elif question and question['buttons']:
                     payload.update({
                         'reply_markup': {
