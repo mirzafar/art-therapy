@@ -527,6 +527,7 @@ class TelegramWebhookHandler(HTTPMethodView):
 
                             await self.finalize(customer['id'])
                             flag = False
+                            break
 
                     if flag is False:
                         break
