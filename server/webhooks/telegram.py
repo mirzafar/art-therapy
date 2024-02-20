@@ -28,7 +28,7 @@ m = Mystem()
 
 HOME_BUTTON = [{
     'text': '🏠 Вернуться в меню',
-}]
+}]  # Кнопка назад
 
 MENU_BUTTONS = [
     [{
@@ -46,12 +46,12 @@ MENU_BUTTONS = [
     [{
         'text': '📁 Плейлист',
     }],
-]
+]  # Список меню
 
 
 class TelegramWebhookHandler(HTTPMethodView):
     @classmethod
-    async def generate_questions(cls, customer_id, _type):
+    async def generate_questions(cls, customer_id, _type):  # Генерация вопросов для общения и создания треков
         items = await db.fetch(
             '''
             SELECT c.id, count(*) AS count_questions, array_agg(q.id) AS question_ids, c.attempt
@@ -84,7 +84,7 @@ class TelegramWebhookHandler(HTTPMethodView):
         return questions
 
     @classmethod
-    async def finalize(cls, customer_id):
+    async def finalize(cls, customer_id):  # Завершить диалог
         keys = [
             f'art:telegram:questions:{customer_id}',
             f'art:question:name:{customer_id}',
@@ -96,7 +96,7 @@ class TelegramWebhookHandler(HTTPMethodView):
         await cache.delete(*keys)
 
     @classmethod
-    async def generate_turn(cls, customer_id, chat_id):
+    async def generate_turn(cls, customer_id, chat_id):  # Генерация треков
         words = await cache.lrange(f'art:telegram:words:{customer_id}', 0, -1)
         if words:
             await tgclient.api_call(
@@ -139,7 +139,7 @@ class TelegramWebhookHandler(HTTPMethodView):
         return
 
     @classmethod
-    async def get_playlist(cls, chat_id, _id):
+    async def get_playlist(cls, chat_id, _id):  # Отправка трека из списка плейлист
         playlist = await db.fetchrow(
             '''
             SELECT *
@@ -148,16 +148,16 @@ class TelegramWebhookHandler(HTTPMethodView):
             ''',
             int(_id)
         )
-        print(await tgclient.api_call(
+        await tgclient.api_call(
             method_name='sendAudio',
             payload={
                 'chat_id': chat_id,
                 'audio': playlist['url'],
             }
-        ))
+        )
 
     @classmethod
-    async def playlists(cls, customer_id, chat_id, page=1):
+    async def playlists(cls, customer_id, chat_id, page=1):  # Список плейлист с пагинацией
         page = int(page)
         limit = 5
         offset = (page - 1) * limit
@@ -213,7 +213,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             buttons.append(a)
 
         if buttons:
-            print(await tgclient.api_call(
+            await tgclient.api_call(
                 method_name='sendMessage',
                 payload={
                     'chat_id': chat_id,
@@ -224,7 +224,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                         'resize_keyboard': True
                     }
                 }
-            ))
+            )
 
     async def get(self, request):
         return response.json({})
@@ -238,8 +238,8 @@ class TelegramWebhookHandler(HTTPMethodView):
         callback_query = DictUtils.as_dict(data.get('callback_query'))
 
         if message:
-            chat_id = StrUtils.to_str(message.get('chat', {}).get('id'))
-            sender = message.get('from', {})
+            chat_id = StrUtils.to_str(message.get('chat', {}).get('id'))  # чат id пользователя
+            sender = message.get('from', {})  # информация о пользователе
             customer = await db.fetchrow(
                 '''
                 SELECT id, username
@@ -504,7 +504,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 genre = x['callback_data']
                                 await cache.lpush(f'art:telegram:words:{customer["id"]}', genre)
 
-                    lemmas = m.lemmatize(text)
+                    lemmas = m.lemmatize(text)  # поиск основы слов
                     risk_words = RISK_WORDS + (prev_question.get('details') or {}).get('risk_words', [])
 
                     flag = True

@@ -1,11 +1,8 @@
 import os
 
 from sanic import Sanic
-from sanic_openapi import openapi2_blueprint
 
 from admin import LoginAdminView, LogoutAdminView
-from admin.api import api_group
-from admin.api.main import OrdersView
 from api.core.upload import UploadView
 from core.auth import auth
 from core.cache import cache
@@ -44,7 +41,6 @@ async def initialize_modules(_app, _loop):
 
 
 app.blueprint([
-    api_group,
     webhooks_bp,
 ])
 

@@ -1,60 +1,80 @@
-create table users
+create table categories
+(
+    id       serial
+        primary key,
+    title    text,
+    attempt  smallint,
+    position smallint,
+    type     varchar(10)
+);
+
+create table questions
 (
     id          serial
         primary key,
-    last_name   varchar(100) default ''::character varying,
-    first_name  varchar(100) default ''::character varying,
-    middle_name varchar(100) default ''::character varying,
-    status      smallint     default 0,
-    password    text         default ''::text not null,
-    username    varchar(100)                  not null,
-    photo       varchar(150) default ''::character varying,
-    created_at  timestamp    default (now())::timestamp without time zone,
-    birthday    date
+    text        text,
+    category_id integer  not null
+        constraint questions_categories_id_fk
+            references categories,
+    buttons     jsonb[],
+    position    smallint not null
+        unique,
+    media       jsonb,
+    details     jsonb
 );
 
-create index users_password_index
-    on users (password);
 
-create index users_status_index
-    on users (status);
-
-create unique index users_username_uindex
-    on users (username);
-
-create table public.districts
+create table tunes
 (
-    id     serial primary key unique not null,
-    title  varchar(250),
-    number smallint,
-    status smallint default 0
+    id     serial
+        primary key,
+    title  text,
+    path   text,
+    status smallint default 1 not null,
+    genre  varchar(50),
+    words  text[]   default '{}'::text[]
 );
 
-create table public.regions
+create table customers
 (
-    id     serial primary key unique not null,
-    title  varchar(250),
-    status smallint default 0
+    id       serial
+        primary key,
+    name     text,
+    username text,
+    uid      text,
+    status   smallint default 1
 );
 
-alter table public.regions
-    add district_id integer;
-
-alter table public.regions
-    add constraint regions_districts_id_fk
-        foreign key (district_id) references public.districts;
-
-create table public.tracks
+create table kbase
 (
-    id          serial primary key unique not null,
-    title       varchar(250),
-    region_id   integer
-        constraint table_name_regions_id_fk
-            references public.regions,
-    description text,
-    status      smallint default 0
+    id       serial
+        primary key,
+    response text,
+    type     varchar(100),
+    title    text
 );
 
+create table playlist
+(
+    id          serial
+        primary key,
+    turn_id     integer,
+    type        varchar(150),
+    customer_id integer,
+    title       text,
+    url         text,
+    status      smallint default 0,
+    words       text[]
+);
 
-
+create table orders
+(
+    id      serial
+        primary key,
+    path    text,
+    chat_id text,
+    status  smallint default 0,
+    words   text[],
+    url     text
+);
 
