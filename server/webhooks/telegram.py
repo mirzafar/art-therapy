@@ -622,12 +622,13 @@ class TelegramWebhookHandler(HTTPMethodView):
                 if not question:
                     question = questions.pop(0) if questions else {}
 
-                payload, end = {'chat_id': chat_id, 'text': question['text']}, False
+                payload, end = {'chat_id': chat_id}, False
                 wait_payloads = []
 
                 if question:
                     await cache.setex(f'art:telegram:prev_question:{customer["id"]}', 600, ujson.dumps(question))
                     await cache.setex(f'art:telegram:questions:{customer["id"]}', 600, ujson.dumps(questions))
+                    payload['text'] = question['text']
 
                 else:
                     end = True
