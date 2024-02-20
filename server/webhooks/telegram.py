@@ -101,6 +101,13 @@ class TelegramWebhookHandler(HTTPMethodView):
                 'payload': {
                     'chat_id': chat_id,
                     'text': 'Как вам эта музыка?',
+                    'reply_markup': {
+                        'keyboard': [
+                                        [{'text': '🔎 Генерировать трек'}]
+                                    ] + [HOME_BUTTON],
+                        'one_time_keyboard': True,
+                        'resize_keyboard': True
+                    }
                 }
             })
 
