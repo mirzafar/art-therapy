@@ -24,10 +24,12 @@ RISK_WORDS = [
     ['нет', 'смысл'], ['нет', 'цель'], ['мучиться'], ['недостойный'], ['виноватый'], ['тяжело'], ['невыносимый']
 ]
 
-LOCALE_TUNES = [{'text': 'Классика', 'callback_data': 'classic'}, {'text': 'Джаз', 'callback_data': 'djazz'},
-                {'text': 'Электронная музыка', 'callback_data': 'electronic'},
-                {'text': 'Музыка для медитации', 'callback_data': 'meditation'},
-                {'text': 'Звуки природы', 'callback_data': 'nature'}]
+LOCALE_TUNES = [
+    {'text': 'Классика', 'callback_data': 'classic'}, {'text': 'Джаз', 'callback_data': 'djazz'},
+    {'text': 'Электронная музыка', 'callback_data': 'electronic'},
+    {'text': 'Музыка для медитации', 'callback_data': 'meditation'},
+    {'text': 'Звуки природы', 'callback_data': 'nature'}
+]
 
 m = Mystem()
 
@@ -102,9 +104,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     'chat_id': chat_id,
                     'text': 'Как вам эта музыка?',
                     'reply_markup': {
-                        'keyboard': [
-                                        [{'text': '🔎 Генерировать трек'}]
-                                    ] + [HOME_BUTTON],
+                        'keyboard': [[{'text': '🔎 Генерировать трек'}], HOME_BUTTON],
                         'one_time_keyboard': True,
                         'resize_keyboard': True
                     }
@@ -123,9 +123,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                 'chat_id': chat_id,
                 'text': 'Вот несколько вариантов музыки, которая может тебе помочь расслабиться:',
                 'reply_markup': {
-                    'keyboard': [
-                                    [x] for x in LOCALE_TUNES
-                                ] + [HOME_BUTTON],
+                    'keyboard': [[x] for x in LOCALE_TUNES + HOME_BUTTON],
                     'one_time_keyboard': True,
                     'resize_keyboard': True
                 }
@@ -179,7 +177,7 @@ class TelegramWebhookHandler(HTTPMethodView):
             f'art:telegram:risk:{customer_id}',
             f'art:telegram:locale_tune:{customer_id}'
         ]
-        await cache.delete(*keys)
+        return await cache.delete(*keys)
 
     @classmethod
     async def generate_turn(cls, customer_id, chat_id):  # Генерация треков
@@ -212,9 +210,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     'chat_id': chat_id,
                     'text': 'Выберите',
                     'reply_markup': {
-                        'keyboard': [
-                                        [{'text': '🛠️ Выбор параметров'}]
-                                    ] + [HOME_BUTTON],
+                        'keyboard': [[{'text': '🛠️ Выбор параметров'}], HOME_BUTTON],
                         'one_time_keyboard': True,
                         'resize_keyboard': True
                     }
@@ -439,10 +435,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                     'chat_id': chat_id,
                     'text': 'Выберите',
                     'reply_markup': {
-                        'keyboard': [
-                                        [{'text': '🛠️ Выбор параметров'}],
-                                        [{'text': '🔎 Генерация трека'}]
-                                    ] + [HOME_BUTTON],
+                        'keyboard': [[{'text': '🛠️ Выбор параметров'}], [{'text': '🔎 Генерация трека'}], HOME_BUTTON],
                         'one_time_keyboard': True,
                         'resize_keyboard': True
                     }
@@ -617,9 +610,8 @@ class TelegramWebhookHandler(HTTPMethodView):
                                 await cache.lpush(f'art:telegram:words:{customer["id"]}', genre)
 
                     lemmas = m.lemmatize(text)  # поиск основы слов
-                    risk_words = RISK_WORDS + (prev_question.get('details') or {}).get('risk_words', [])
 
-                    for x in risk_words:
+                    for x in RISK_WORDS:
                         if len(list(set(x) & set(lemmas))) == len(x):
                             await cache.setex(f'art:telegram:risk:{customer["id"]}', 600, 1)
                             await self.send_locale_tune(customer['id'], chat_id)
@@ -630,7 +622,6 @@ class TelegramWebhookHandler(HTTPMethodView):
                     question = questions.pop(0) if questions else {}
 
                 payload, end = {'chat_id': chat_id}, False
-                wait_payloads = []
 
                 if question:
                     await cache.setex(f'art:telegram:prev_question:{customer["id"]}', 600, ujson.dumps(question))
@@ -648,9 +639,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                         payload.update({
                             'text': 'Выберите',
                             'reply_markup': {
-                                'keyboard': [
-                                                [{'text': '🔎 Генерировать трек'}]
-                                            ] + [HOME_BUTTON],
+                                'keyboard': [[{'text': '🔎 Генерировать трек'}], HOME_BUTTON],
                                 'one_time_keyboard': True,
                                 'resize_keyboard': True
                             }
@@ -671,19 +660,13 @@ class TelegramWebhookHandler(HTTPMethodView):
                 else:
                     payload.update({
                         'reply_markup': {
-                            'keyboard': [
-                                HOME_BUTTON
-                            ],
+                            'keyboard': [HOME_BUTTON],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
                         }
                     })
 
                 await tgclient.api_call(method_name=method, payload=payload)
-                if wait_payloads:
-                    for x in wait_payloads:
-                        await tgclient.api_call(method_name=x['method_name'], payload=x['payload'])
-                        await asyncio.sleep(2)
                 break
 
         if success is False:
@@ -703,9 +686,7 @@ class TelegramWebhookHandler(HTTPMethodView):
                         'chat_id': chat_id,
                         'text': 'Выберите',
                         'reply_markup': {
-                            'keyboard': [
-                                            [{'text': x}] for x in buttons
-                                        ] + [HOME_BUTTON],
+                            'keyboard': [[{'text': x}] for x in buttons] + [HOME_BUTTON],
                             'one_time_keyboard': True,
                             'resize_keyboard': True
                         }
