@@ -1,0 +1,19 @@
+import os
+
+settings = {
+    'base_url': 'localhost',
+    'db': {
+        'host': '127.0.0.1',
+        'database': 'ai',
+        'port': 5432,
+        'user': 'postgres',
+        'password': '12345',
+    },
+
+    'tg': {
+        'token': '1047171618:AAESsy8R1FmqI8aqd9UniehB3KDSsG_rlRY'
+    },
+    'redis': 'redis://127.0.0.1:6379',
+    'root_dir': os.path.dirname(os.path.abspath(__file__)),
+    'file_path': '/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1])
+}
