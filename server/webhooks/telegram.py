@@ -235,6 +235,11 @@ class TelegramWebhookHandler(HTTPMethodView):
             payload={
                 'chat_id': chat_id,
                 'audio': playlist['url'],
+                'reply_markup': {
+                    'keyboard': [HOME_BUTTON],
+                    'one_time_keyboard': True,
+                    'resize_keyboard': True
+                }
             }
         )
 
